@@ -9,6 +9,9 @@ class Card:
     def __repr__(self):
         return f'Card(name={self.name}, cost={self.cost})'
     
+    def __eq__(self, other):
+        return False
+    
     @classmethod
     def createCardLibrary(cls):
         cls.cardLibrary={

@@ -240,37 +240,46 @@ def battle_onStep(app):
             app.gameOver=True
         app.battle.p1.elixir=min(app.battle.p1.elixir+0.06*app.constant, 10)
         app.battle.p2.elixir=min(app.battle.p2.elixir+0.06*app.constant, 10)
-        for friendlyUnit, friendlyPosition in app.friendlyUnits:
+
+        for index, (friendlyUnit, friendlyPosition) in enumerate(app.friendlyUnits):
             if(isinstance(friendlyUnit, Tower)):
                 continue
             elif(isinstance(friendlyUnit, Troop)):
-                print(f'Target, distance={findTarget(app, friendlyUnit)}')
+                target, distance, movementVector = findTarget(app, friendlyUnit)
+                print(f'target: {target}, distance: {distance}, moveV: {movementVector}')
+                originalC, originalR = friendlyPosition
+                dC, dR = movementVector
+                newPosition = (originalC + dC*0.1), (originalR + dR*0.1)
+                app.friendlyUnits[index] = (friendlyUnit, newPosition)
                 #if distance to target less than range, attack (except bridge)
                 #if distance greater than range, walk in direction of returned vector
             elif(isinstance(friendlyUnit, Spell)):
                 continue
-#DO LATER: MAKE TARGETTING SPECIFIC CURRENTLY ALL TROOPS TARGET EACH OTHER
+
+#DO LATER: MAKE TARGETTING SPECIFIC; CURRENTLY ALL TROOPS TARGET EACH OTHER
 def findTarget(app, unit):
     #unitTarget=unit.targets
     closestTarget=None
     closestDistance=None
+    movementVector=None
     for enemyUnit, enemyPosition in app.enemyUnits:
-        currTarget, currDistance=getDistance(app, unit, enemyUnit)
+        currTarget, currDistance, v = getDistance(app, unit, enemyUnit)
         if(closestTarget==None or currDistance<closestDistance):
             closestTarget=currTarget
             closestDistance=currDistance
+            movementVector=v
     #also finds the distance between the unit and closest bridge tile
     #if closer to bridge, walk to bridge instead
     #print(f'Closest Target: {closestTarget}, Closest Distance: {closestDistance}')
-    bridgeTarget, bridgeDistance=getDistance(app, unit, 'bridge')
+    bridgeTarget, bridgeDistance, bridgeV = getDistance(app, unit, 'bridge')
     #print(f'Bridge Distance: {bridgeDistance}')
 
     if(bridgeDistance<closestDistance):
         #print('The bridge is closer than any other target!')
-        return bridgeTarget, bridgeDistance
+        return bridgeTarget, bridgeDistance, bridgeV
     else:
         #print('The bridge is not the closest target')
-        return closestTarget, closestDistance
+        return closestTarget, closestDistance, movementVector
 
 def findIndex(app, unit, friendTF):
     #where u and p represent unit, position
@@ -296,16 +305,30 @@ def getDistance(app, friendlyUnit, enemyUnit):
     if(enemyUnit=='bridge'):
         bridgeLeftC, bridgeLeftR = 3, 16
         bridgeRightC, bridgeRightR = 14, 16
-        diffLeftC, diffLeftR = abs(friendC-bridgeLeftC), abs(friendR-bridgeLeftR)
-        diffRightC, diffRightR = abs(friendC-bridgeRightC), abs(friendR-bridgeRightR)
-        return 'bridge', min(math.sqrt(diffLeftC**2 + diffLeftR**2), math.sqrt(diffRightC**2 + diffRightR**2))
+        diffLeftC, diffLeftR = (bridgeLeftC-friendC), (bridgeLeftR-friendR)
+        diffRightC, diffRightR = (bridgeRightC-friendC), (bridgeRightR-friendR)
+        distLeft=math.sqrt(diffLeftC**2 + diffLeftR**2)
+        distRight=math.sqrt(diffRightC**2 + diffRightR**2)
+        if(distLeft<distRight):
+            mag=magnitude((diffLeftC, diffLeftR))
+            targetUnitVec=(diffLeftC/mag, diffLeftR/mag)
+        else:
+            mag=magnitude((diffRightC, diffRightR))
+            targetUnitVec=(diffRightC/mag, diffRightR/mag)
+
+        return 'bridge', min(distLeft, distRight), targetUnitVec
     else:
         enemyIndex=findIndex(app, enemyUnit, False)
         enemyC, enemyR=app.enemyUnits[enemyIndex][1]
         #print(f'enemyC, enemyR = {enemyC, enemyR}')
-        diffC, diffR =(abs(friendC-enemyC), abs(friendR-enemyR))
+        diffC, diffR =(enemyC-friendC), (enemyR-friendR)
         #print(f'diffC, diffR: {diffC, diffR}')
-        return enemyUnit, math.sqrt(diffC**2 + diffR**2)
+        targetUnitVec=(diffC/magnitude((diffC, diffR)), diffR/magnitude((diffC, diffR)))
+        return enemyUnit, math.sqrt(diffC**2 + diffR**2), targetUnitVec
+
+def magnitude(v):
+    x, y = v
+    return math.sqrt(x**2 + y**2)
 
 def attackTarget():
     pass
