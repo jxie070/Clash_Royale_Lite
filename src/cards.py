@@ -18,9 +18,9 @@ class Card:
         cls.cardLibrary={
             'Fireball': Spell('Fireball', 4, 'assets/fireball.png', None, 689, 207, 2.5),
             'Arrows': Spell('Arrows', 3, 'assets/arrows.png', None, 366, 93, 4,),
-            'Giant': Troop('Giant', 5, 'assets/giant.png', 'assets/giant_sprite.png', 4091, 254, 1.5, 1, 'buildings', 'slow'),
+            'Giant': Troop('Giant', 5, 'assets/giant.png', 'assets/giant_sprite.png', 4091, 254, 1.5, 2, 'buildings', 'slow'),
             'Knight': Troop('Knight', 3, 'assets/knight.png', 'assets/knight_sprite.png', 1766, 202, 1, 2, 'ground', 'medium'),
-            'Mini-Pekka':Troop('Mini-Pekka', 4, 'assets/mini-pekka.png', 'assets/mini-pekka_sprite.png', 1361, 720, 1, 1, 'ground', 'fast'),
+            'Mini-Pekka':Troop('Mini-Pekka', 4, 'assets/mini-pekka.png', 'assets/mini-pekka_sprite.png', 1361, 720, 1, 2, 'ground', 'fast'),
             'Musketeer': Troop('Musketeer', 4, 'assets/musketeer.png', 'assets/musketeer_sprite.png', 720, 218, 1, 6, 'air/ground', 'medium'),
             'Archers': Troop('Archers', 3, 'assets/archers.png', 'assets/archers_sprite.png', 304, 107, 0.9, 6, 'air/ground', 'medium'),
             'Cannon': Building('Cannon', 3, 'assets/cannon.png', 'assets/cannon_sprite.png', 824, 212, 0.9, 5.5, 'ground', 30)

@@ -3,7 +3,7 @@ from game import Game
 from cards import Card, Building, Troop, Spell
 from tower import Tower, Princess, King
 from node import Node, astar
-import math, copy, random
+import math, copy, random, time
 
 #Jack Xie, jackx2
 #This project in its entirety, the concepts, the sprites, etc. are taken from Supercell's game Clash Royale.
@@ -14,7 +14,7 @@ import math, copy, random
 #3. write algorihm that finds each card's target, whether or not target is in range, and add pathing blocks to board
 
 def onAppStart(app):
-    app.stepsPerSecond=60
+    app.stepsPerSecond=30
     app.width=480
     app.height=800
     app.gold=0
@@ -190,13 +190,19 @@ def shop_findButton(app, mouseX, mouseY):
     return None
 
 def battle_onScreenActivate(app):
+    #time constants
+    app.initialTime=time.time()
+    app.previousTime=app.initialTime
+    app.dt=None
+    app.countdownTime=360
+    app.remainingTime=app.countdownTime-app.initialTime
     #create the card library (checked working)
     Card.createCardLibrary()
     Tower.createTowerLibrary()
     #initialize the game
     app.battle = Game(app.username, 'Bot', app.deck, app.botDeck)
-    app.battle.p1.elixir=7
-    app.battle.p2.elixir=7
+    app.battle.p1.elixir=5
+    app.battle.p2.elixir=5
     #game time trackers
     app.steps=0
     app.constant=1
@@ -230,34 +236,45 @@ def battle_onScreenActivate(app):
     app.enemyUnits.append((Tower.towerLibrary['PrincessLeft'].clone(), (3, 5)))
     app.enemyUnits.append((Tower.towerLibrary['PrincessRight'].clone(), (14, 5)))
     app.enemyUnits.append((Tower.towerLibrary['King'].clone(), (8.5, 2.5)))
+    #deck colors
+    app.card1bg=rgb(95, 66, 50)
+    app.card2bg=rgb(95, 66, 50)
+    app.card3bg=rgb(95, 66, 50)
+    app.card4bg=rgb(95, 66, 50)
 
 def battle_onStep(app):
-    if(not app.gameOver):
+    if(app.gameOver):
+        setActiveScreen('main')
+    else:
+        #time
+        app.currentTime=time.time()
+        elapsedTime=app.currentTime-app.initialTime
+        app.remainingTime=max(0, app.countdownTime-elapsedTime)
         #elixir
-        app.steps+=1
-        if app.steps==7200:
+        if math.floor(app.remainingTime)>240:
+            app.constant=1
+        elif math.floor(app.remainingTime>180):
             app.constant=2
-        elif app.steps==10800:
+        elif math.floor(app.remainingTime>0):
             app.constant=3
-        elif(app.steps)==21600:
+        elif app.remainingTime==0:
             app.gameOver=True
-        app.battle.p1.elixir=min(app.battle.p1.elixir+0.06*app.constant, 10)
-        app.battle.p2.elixir=min(app.battle.p2.elixir+0.06*app.constant, 10)
+        elixirRate=1/2.8
+        app.dt=app.currentTime-app.previousTime
+        app.previousTime=app.currentTime
+        app.battle.p1.elixir=min(app.battle.p1.elixir+app.dt*elixirRate*app.constant, 10)
+        app.battle.p2.elixir=min(app.battle.p2.elixir+app.dt*elixirRate*app.constant, 10)
         #movement
         for index, (friendlyUnit, friendlyPosition) in enumerate(app.friendlyUnits):
             if(isinstance(friendlyUnit, Tower)):
                 continue
             elif(isinstance(friendlyUnit, Troop)):
-                enemyTarget, enemyDistance, enemyPosition = findTarget(app, friendlyUnit)
+                enemyTarget, enemyDistance, enemyPosition, enemyIndex = findTarget(app, friendlyUnit)
                 print(f'enemyDistance: {enemyDistance}, enemyPosition: {enemyPosition}, friendlyPosition: {friendlyPosition}')
-                if(enemyDistance<=friendlyUnit.hitrange):
-                    pass
-                    #attackTarget(app, friendlyUnit, enemyTarget, hitspeed)
                 path = getPath(app, friendlyPosition, enemyPosition, friendlyUnit)
                 print(f'Path: {path}')
                 if(len(path)==1):
-                    pass
-                    #attackTarget
+                    attackTarget(app, friendlyUnit, enemyTarget, enemyIndex, friendlyUnit.hitspeed)
                 else:
                     nextRow, nextCol=path[1]
                     app.friendlyUnits[index]=(friendlyUnit, (nextCol, nextRow))
@@ -271,6 +288,12 @@ def battle_onStep(app):
                             enemyUnit.health-=friendlyUnit.damage
                 app.friendlyUnits.pop(index)
 
+def attackTarget(app, friendlyUnit, enemyUnit, enemyIndex, hitspeed):
+    enemyUnit.health-=friendlyUnit.damage
+    if(enemyUnit.health<=0):
+        if(isinstance(enemyUnit, King)):
+            app.gameOver=True
+        app.enemyUnits.pop(enemyIndex)
 
 #DO LATER: MAKE TARGETTING SPECIFIC; CURRENTLY ALL TROOPS TARGET EACH OTHER
 def findTarget(app, unit):
@@ -278,14 +301,16 @@ def findTarget(app, unit):
     closestTarget=None
     closestDistance=None
     closestPosition=None
+    closestIndex=None
     #movementVector=None
-    for enemyUnit, enemyPosition in app.enemyUnits:
+    for enemyIndex, (enemyUnit, enemyPosition) in enumerate(app.enemyUnits):
         currDistance = getDistance(app, unit, enemyUnit)
         if(closestTarget==None or currDistance<closestDistance):
             closestTarget=enemyUnit
             closestDistance=currDistance
             closestPosition=enemyPosition
-    return closestTarget, closestDistance, closestPosition
+            closestIndex=enemyIndex
+    return closestTarget, closestDistance, closestPosition, closestIndex
   
 def getPath(app, start, end, unit):
     startCol, startRow = start
@@ -319,9 +344,6 @@ def getDistance(app, friendlyUnit, enemyUnit):
     #print(f'diffC, diffR: {diffC, diffR}')
     return math.sqrt(diffC**2 + diffR**2)
 
-def attackTarget():
-    pass
-
 def battle_redrawAll(app):
     #the background for the card deck in game
     drawImage('assets/woodbg.png', 0, 650, width=480, height=150, opacity=85)
@@ -334,10 +356,10 @@ def battle_redrawAll(app):
     drawImage('assets/elixir_icon.png', 0, 745, width=60, height=60)
     drawLabel(math.floor(app.battle.p1.elixir), 30, 775, fill='white', size=24, bold=True)
     #drawing the empty card slots that will be set to cards
-    drawRect(90, 660, 75, 90, fill=rgb(95, 66, 50))
-    drawRect(175, 660, 75, 90, fill=rgb(95, 66, 50))
-    drawRect(260, 660, 75, 90, fill=rgb(95, 66, 50))
-    drawRect(345, 660, 75, 90, fill=rgb(95, 66, 50))
+    drawRect(90, 660, 75, 90, fill=app.card1bg)
+    drawRect(175, 660, 75, 90, fill=app.card2bg)
+    drawRect(260, 660, 75, 90, fill=app.card3bg)
+    drawRect(345, 660, 75, 90, fill=app.card4bg)
     #filling the slots with cards
     drawImage(app.battle.p1.cardObjects[0].image, 90, 660, width=75, height=90)
     drawImage(app.battle.p1.cardObjects[1].image, 175, 660, width=75, height=90)
@@ -374,18 +396,32 @@ def battle_redrawAll(app):
             drawUnit(app, enemyUnit, enemyPosition) 
     #drawing timer
     drawTimer(app)  
+    #drawing spell range if selected card is Spell
+    drawSpellBorders(app)
+
+
+def drawSpellBorders(app):
+    if(isinstance(app.selectedCard, Spell) and app.selectedCell!=None):
+        radius=app.selectedCard.radius
+        col, row = app.selectedCell
+        adjustedX, adjustedY = cellToPixel(app, row, col)
+        if(app.selectedCell!=None):
+            drawOval(adjustedX, adjustedY, radius*app.colWidth*2, radius*app.rowHeight*2, fill='white', opacity=25)
+
+def cellToPixel(app, row, col):
+    adjustedX = (col+0.5)*app.colWidth
+    adjustedY = (row+0.5)*app.rowHeight
+    return adjustedX, adjustedY
 
 def drawUnit(app, unit, position):
     col, row = position
-    colRatio, rowRatio = col/app.cols, row/app.rows
-    adjustedX=colRatio*app.boardWidth+(app.colWidth/2)
-    adjustedY=rowRatio*app.boardHeight-(app.rowHeight/2)
+    adjustedX, adjustedY = cellToPixel(app, row, col)
     if(isinstance(unit, (Troop, Building))):
         drawImage(unit.sprite, adjustedX, adjustedY, align='center')
     drawLabel(unit.health, adjustedX, adjustedY, size=18, fill='white', bold=True)
 
 def drawTimer(app):
-    seconds = app.steps//app.stepsPerSecond
+    seconds = math.floor(app.remainingTime)
     minutes = seconds//60
     seconds -= minutes*60
     secondsString=f'0{seconds}' if(seconds<10) else str(seconds)
@@ -416,19 +452,36 @@ def battle_onKeyPress(app, key):
         setActiveScreen('main')
     elif(key=='1'):
         app.selectedCard=app.battle.p1.cardObjects[0]
+        app.card1bg='white'
+        app.card2bg=rgb(95, 66, 50)
+        app.card3bg=rgb(95, 66, 50)
+        app.card4bg=rgb(95, 66, 50)
         print('Selected Card:', app.selectedCard.name)
     elif(key=='2'):
         app.selectedCard=app.battle.p1.cardObjects[1]
+        app.card2bg='white'
+        app.card1bg=rgb(95, 66, 50)
+        app.card3bg=rgb(95, 66, 50)
+        app.card4bg=rgb(95, 66, 50)        
         print('Selected Card:', app.selectedCard.name)
     elif(key=='3'):
         app.selectedCard=app.battle.p1.cardObjects[2]
+        app.card3bg='white'
+        app.card1bg=rgb(95, 66, 50)
+        app.card2bg=rgb(95, 66, 50)
+        app.card4bg=rgb(95, 66, 50)
         print('Selected Card:', app.selectedCard.name)
     elif(key=='4'):
         app.selectedCard=app.battle.p1.cardObjects[3]
+        app.card4bg='white'
+        app.card1bg=rgb(95, 66, 50)
+        app.card2bg=rgb(95, 66, 50)
+        app.card3bg=rgb(95, 66, 50)
         print('Selected Card:', app.selectedCard.name)
 
 def battle_onMouseMove(app, mouseX, mouseY):
-    app.selectedCell=battle_getCell(app, mouseX, mouseY)        
+    app.selectedCell=battle_getCell(app, mouseX, mouseY)
+
 
 def battle_onMousePress(app, mouseX, mouseY):
     selectedCell=battle_getCell(app, mouseX, mouseY)
@@ -468,7 +521,11 @@ def settings_onScreenActivate(app):
     pass
 
 def settings_redrawAll(app):
-    pass
+    drawImage('assets/bg.png', 0, 0)
+
+def settings_onKeyPress(app, key):
+    if(key=='escape'):
+        setActiveScreen('main')
 
 def main():
     runAppWithScreens(initialScreen='main');
