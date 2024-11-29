@@ -2,16 +2,17 @@ from cmu_graphics import *
 from game import Game
 from cards import Card, Building, Troop, Spell
 from tower import Tower, Princess, King
-import math
+from node import Node, astar
+import math, copy, random
+
 #Jack Xie, jackx2
-#all images used are from Supercell's game Clash Royale
+#This project in its entirety, the concepts, the sprites, etc. are taken from Supercell's game Clash Royale.
+#This project is meant to mimic some of the core features of Clash Royale
 #TODO:
-#0. MAKE GET DISTANCE ALSO RETURN A THIRD PARAMETER, A VECTOR IN THE DIRECTION OF TARGET, THEN ADD THE UNIT VECTOR TO
-#POSITION OF THE CARD TO MAKE IT WALK
 #1. write onStep function to animate cards
 #2. draw each card in units with their position
 #3. write algorihm that finds each card's target, whether or not target is in range, and add pathing blocks to board
-#4. NUMBER 0 EASY
+
 def onAppStart(app):
     app.stepsPerSecond=60
     app.width=480
@@ -220,17 +221,19 @@ def battle_onScreenActivate(app):
     app.rowHeight=app.boardHeight/app.rows
     app.colWidth=app.boardWidth/app.cols
     app.cellBorderWidth=1
+    #Clones so towers dont alias to each other
     #adding Towers to app.friendlyUnits
-    app.friendlyUnits.append((Tower.towerLibrary['PrincessLeft'], (3, 26)))
-    app.friendlyUnits.append((Tower.towerLibrary['PrincessRight'], (14, 26)))
-    app.friendlyUnits.append((Tower.towerLibrary['King'], (8.5, 29.5)))
+    app.friendlyUnits.append((Tower.towerLibrary['PrincessLeft'].clone(), (3, 26)))
+    app.friendlyUnits.append((Tower.towerLibrary['PrincessRight'].clone(), (14, 26)))
+    app.friendlyUnits.append((Tower.towerLibrary['King'].clone(), (8.5, 29.5)))
     #adding enemy Towers to app.enemyUnits
-    app.enemyUnits.append((Tower.towerLibrary['PrincessLeft'], (3, 5)))
-    app.enemyUnits.append((Tower.towerLibrary['PrincessRight'], (14, 5)))
-    app.enemyUnits.append((Tower.towerLibrary['King'], (8.5, 2.5)))
+    app.enemyUnits.append((Tower.towerLibrary['PrincessLeft'].clone(), (3, 5)))
+    app.enemyUnits.append((Tower.towerLibrary['PrincessRight'].clone(), (14, 5)))
+    app.enemyUnits.append((Tower.towerLibrary['King'].clone(), (8.5, 2.5)))
 
 def battle_onStep(app):
     if(not app.gameOver):
+        #elixir
         app.steps+=1
         if app.steps==7200:
             app.constant=2
@@ -240,46 +243,57 @@ def battle_onStep(app):
             app.gameOver=True
         app.battle.p1.elixir=min(app.battle.p1.elixir+0.06*app.constant, 10)
         app.battle.p2.elixir=min(app.battle.p2.elixir+0.06*app.constant, 10)
-
+        #movement
         for index, (friendlyUnit, friendlyPosition) in enumerate(app.friendlyUnits):
             if(isinstance(friendlyUnit, Tower)):
                 continue
             elif(isinstance(friendlyUnit, Troop)):
-                target, distance, movementVector = findTarget(app, friendlyUnit)
-                print(f'target: {target}, distance: {distance}, moveV: {movementVector}')
-                originalC, originalR = friendlyPosition
-                dC, dR = movementVector
-                newPosition = (originalC + dC*0.1), (originalR + dR*0.1)
-                app.friendlyUnits[index] = (friendlyUnit, newPosition)
-                #if distance to target less than range, attack (except bridge)
-                #if distance greater than range, walk in direction of returned vector
+                enemyTarget, enemyDistance, enemyPosition = findTarget(app, friendlyUnit)
+                print(f'enemyDistance: {enemyDistance}, enemyPosition: {enemyPosition}, friendlyPosition: {friendlyPosition}')
+                if(enemyDistance<=friendlyUnit.hitrange):
+                    pass
+                    #attackTarget(app, friendlyUnit, enemyTarget, hitspeed)
+                path = getPath(app, friendlyPosition, enemyPosition, friendlyUnit)
+                print(f'Path: {path}')
+                if(len(path)==1):
+                    pass
+                    #attackTarget
+                else:
+                    nextRow, nextCol=path[1]
+                    app.friendlyUnits[index]=(friendlyUnit, (nextCol, nextRow))
             elif(isinstance(friendlyUnit, Spell)):
-                continue
+                radius=friendlyUnit.radius
+                for enemyUnit, enemyPosition in app.enemyUnits:
+                    if(getDistance(app, friendlyUnit, enemyUnit)<=radius):
+                        if(isinstance(enemyUnit, Tower)):
+                            enemyUnit.health-=friendlyUnit.towerDamage
+                        else:
+                            enemyUnit.health-=friendlyUnit.damage
+                app.friendlyUnits.pop(index)
+
 
 #DO LATER: MAKE TARGETTING SPECIFIC; CURRENTLY ALL TROOPS TARGET EACH OTHER
 def findTarget(app, unit):
     #unitTarget=unit.targets
     closestTarget=None
     closestDistance=None
-    movementVector=None
+    closestPosition=None
+    #movementVector=None
     for enemyUnit, enemyPosition in app.enemyUnits:
-        currTarget, currDistance, v = getDistance(app, unit, enemyUnit)
+        currDistance = getDistance(app, unit, enemyUnit)
         if(closestTarget==None or currDistance<closestDistance):
-            closestTarget=currTarget
+            closestTarget=enemyUnit
             closestDistance=currDistance
-            movementVector=v
-    #also finds the distance between the unit and closest bridge tile
-    #if closer to bridge, walk to bridge instead
-    #print(f'Closest Target: {closestTarget}, Closest Distance: {closestDistance}')
-    bridgeTarget, bridgeDistance, bridgeV = getDistance(app, unit, 'bridge')
-    #print(f'Bridge Distance: {bridgeDistance}')
-
-    if(bridgeDistance<closestDistance):
-        #print('The bridge is closer than any other target!')
-        return bridgeTarget, bridgeDistance, bridgeV
-    else:
-        #print('The bridge is not the closest target')
-        return closestTarget, closestDistance, movementVector
+            closestPosition=enemyPosition
+    return closestTarget, closestDistance, closestPosition
+  
+def getPath(app, start, end, unit):
+    startCol, startRow = start
+    endCol, endRow = end
+    newStart = startRow, startCol
+    newEnd = endRow, endCol
+    hitrange=unit.hitrange
+    return astar(app.board, newStart, newEnd, hitrange)
 
 def findIndex(app, unit, friendTF):
     #where u and p represent unit, position
@@ -295,40 +309,15 @@ def findIndex(app, unit, friendTF):
             positionList.append(p)
     return unitList.index(unit)
 
-
 def getDistance(app, friendlyUnit, enemyUnit):
     friendlyIndex=findIndex(app, friendlyUnit, True)
     friendC, friendR=app.friendlyUnits[friendlyIndex][1]
-    #print(f'friendC, friendR = {friendC, friendR}')
-    #making sure if friend unit row is past bridge, troop doesnt gravitate toward bridge
-    # and friendR>14
-    if(enemyUnit=='bridge'):
-        bridgeLeftC, bridgeLeftR = 3, 16
-        bridgeRightC, bridgeRightR = 14, 16
-        diffLeftC, diffLeftR = (bridgeLeftC-friendC), (bridgeLeftR-friendR)
-        diffRightC, diffRightR = (bridgeRightC-friendC), (bridgeRightR-friendR)
-        distLeft=math.sqrt(diffLeftC**2 + diffLeftR**2)
-        distRight=math.sqrt(diffRightC**2 + diffRightR**2)
-        if(distLeft<distRight):
-            mag=magnitude((diffLeftC, diffLeftR))
-            targetUnitVec=(diffLeftC/mag, diffLeftR/mag)
-        else:
-            mag=magnitude((diffRightC, diffRightR))
-            targetUnitVec=(diffRightC/mag, diffRightR/mag)
-
-        return 'bridge', min(distLeft, distRight), targetUnitVec
-    else:
-        enemyIndex=findIndex(app, enemyUnit, False)
-        enemyC, enemyR=app.enemyUnits[enemyIndex][1]
-        #print(f'enemyC, enemyR = {enemyC, enemyR}')
-        diffC, diffR =(enemyC-friendC), (enemyR-friendR)
-        #print(f'diffC, diffR: {diffC, diffR}')
-        targetUnitVec=(diffC/magnitude((diffC, diffR)), diffR/magnitude((diffC, diffR)))
-        return enemyUnit, math.sqrt(diffC**2 + diffR**2), targetUnitVec
-
-def magnitude(v):
-    x, y = v
-    return math.sqrt(x**2 + y**2)
+    enemyIndex=findIndex(app, enemyUnit, False)
+    enemyC, enemyR=app.enemyUnits[enemyIndex][1]
+    #print(f'enemyC, enemyR = {enemyC, enemyR}')
+    diffC, diffR =(enemyC-friendC), (enemyR-friendR)
+    #print(f'diffC, diffR: {diffC, diffR}')
+    return math.sqrt(diffC**2 + diffR**2)
 
 def attackTarget():
     pass
@@ -354,6 +343,10 @@ def battle_redrawAll(app):
     drawImage(app.battle.p1.cardObjects[1].image, 175, 660, width=75, height=90)
     drawImage(app.battle.p1.cardObjects[2].image, 260, 660, width=75, height=90)
     drawImage(app.battle.p1.cardObjects[3].image, 345, 660, width=75, height=90)
+    #drawing the next card
+    drawRect(5, 705, 35, 45, fill=rgb(95, 66, 50))
+    drawImage(app.battle.p1.cardObjects[4].image, 5, 705, width=35, height=45)
+    drawLabel('Next:', 20, 700, fill='white', size=16, bold=True)
     #creating the board
     for row in range(app.rows):
         for col in range(app.cols):
@@ -371,16 +364,34 @@ def battle_redrawAll(app):
     drawImage('assets/red_princess_tower.png', 53, 508, width=80, height=70)
     drawImage('assets/red_princess_tower.png', 347, 508, width=80, height=70)
     drawImage('assets/blue_king_tower.png', 187, 569, width=106, height=81)
-    #drawing the units in friendlyUnits
-    for unit, position in app.friendlyUnits:
-        if(isinstance(unit, Troop)):
-            drawUnit(app, unit, position)
+    #drawing the units/buildings in friendlyUnits
+    for friendlyUnit, friendlyPosition in app.friendlyUnits:
+        if(isinstance(friendlyUnit, (Troop, Building, Tower))):
+            drawUnit(app, friendlyUnit, friendlyPosition)
+    #repeating for enemy units
+    for enemyUnit, enemyPosition in app.enemyUnits:
+        if(isinstance(friendlyUnit, (Troop, Building, Tower))):
+            drawUnit(app, enemyUnit, enemyPosition) 
+    #drawing timer
+    drawTimer(app)  
 
 def drawUnit(app, unit, position):
     col, row = position
     colRatio, rowRatio = col/app.cols, row/app.rows
-    drawImage(unit.sprite, colRatio*app.boardWidth+(app.colWidth/2), rowRatio*app.boardHeight-(app.rowHeight/2), align='center')
-    
+    adjustedX=colRatio*app.boardWidth+(app.colWidth/2)
+    adjustedY=rowRatio*app.boardHeight-(app.rowHeight/2)
+    if(isinstance(unit, (Troop, Building))):
+        drawImage(unit.sprite, adjustedX, adjustedY, align='center')
+    drawLabel(unit.health, adjustedX, adjustedY, size=18, fill='white', bold=True)
+
+def drawTimer(app):
+    seconds = app.steps//app.stepsPerSecond
+    minutes = seconds//60
+    seconds -= minutes*60
+    secondsString=f'0{seconds}' if(seconds<10) else str(seconds)
+    minutesString=f'0{minutes}' if(minutes<10) else str(minutes)
+    time = f'{minutesString}:{secondsString}'
+    drawLabel(time, 440, 20, fill='white', size=24, bold=True)
 
 def drawCell(app, row, col):
     colorList=['green', 'blue', 'brown', 'black', 'red']
@@ -420,15 +431,16 @@ def battle_onMouseMove(app, mouseX, mouseY):
     app.selectedCell=battle_getCell(app, mouseX, mouseY)        
 
 def battle_onMousePress(app, mouseX, mouseY):
+    selectedCell=battle_getCell(app, mouseX, mouseY)
+    print(selectedCell)
     if(app.selectedCard!=None):
-        selectedCell=battle_getCell(app, mouseX, mouseY)
         selectedIndex=app.battle.p1.cards.index(app.selectedCard.name)
         if(selectedCell!=None):
             print(selectedCell, app.selectedCard.name)
             if(validPosition(app, app.selectedCard, selectedCell)):
-                print('Valid Position!')
+                #print('Valid Position!')
                 app.battle.p1.deployCard(app, app.selectedCard, selectedCell, selectedIndex)
-                print(f'friendlyUnits: {app.friendlyUnits}')
+                #print(f'friendlyUnits: {app.friendlyUnits}')
             else:
                 print('Invalid Position!')
             

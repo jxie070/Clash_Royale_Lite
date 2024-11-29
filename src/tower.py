@@ -1,4 +1,4 @@
-import math
+import math, copy
 class Tower:
     towerLibrary={}
     def __init__(self, health, damage, hitrange, hitspeed, image):
@@ -6,10 +6,13 @@ class Tower:
         self.damage=damage
         self.hitrange=hitrange
         self.hitspeed=hitspeed
+        self.image=None
 
     def __repr__(self):
         return f'Tower(health={self.health}, damage={self.damage}, hitrange={self.hitrange}, hitspeed={self.hitspeed})'
     
+    def clone(self):
+        return copy.deepcopy(self)
 
     @classmethod
     def createTowerLibrary(cls):

@@ -12,7 +12,7 @@ class Player:
     def deployCard(self, app, card, selectedCell, selectedIndex):
         if self.elixir>=card.cost:
             self.elixir-=card.cost
-            app.friendlyUnits.append((app.selectedCard, selectedCell))
+            app.friendlyUnits.append((app.selectedCard.clone(), selectedCell))
             app.selectedCard=None
             app.battle.p1.cards.append(app.battle.p1.cards.pop(selectedIndex))
             app.battle.p1.cardObjects=[Card.cardLibrary[card] for card in app.battle.p1.cards]
