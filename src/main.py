@@ -249,6 +249,8 @@ def battle_onStep(app):
         #time
         app.currentTime=time.time()
         elapsedTime=app.currentTime-app.initialTime
+        app.dt=app.currentTime-app.previousTime
+        app.previousTime=app.currentTime
         app.remainingTime=max(0, app.countdownTime-elapsedTime)
         #elixir
         if math.floor(app.remainingTime)>240:
@@ -260,12 +262,12 @@ def battle_onStep(app):
         elif app.remainingTime==0:
             app.gameOver=True
         elixirRate=1/2.8
-        app.dt=app.currentTime-app.previousTime
-        app.previousTime=app.currentTime
         app.battle.p1.elixir=min(app.battle.p1.elixir+app.dt*elixirRate*app.constant, 10)
         app.battle.p2.elixir=min(app.battle.p2.elixir+app.dt*elixirRate*app.constant, 10)
         #movement
         for index, (friendlyUnit, friendlyPosition) in enumerate(app.friendlyUnits):
+            if(not isinstance(friendlyUnit, Spell) and friendlyUnit.health<=0):
+                app.friendlyUnits.pop(index)     
             if(isinstance(friendlyUnit, Tower)):
                 continue
             elif(isinstance(friendlyUnit, Troop)):
@@ -287,6 +289,8 @@ def battle_onStep(app):
                         else:
                             enemyUnit.health-=friendlyUnit.damage
                 app.friendlyUnits.pop(index)
+            elif(isinstance(friendlyUnit, Building)):
+                friendlyUnit.health-=(app.dt/friendlyUnit.lifespan)*friendlyUnit.initialHealth
 
 def attackTarget(app, friendlyUnit, enemyUnit, enemyIndex, hitspeed):
     enemyUnit.health-=friendlyUnit.damage
@@ -418,7 +422,10 @@ def drawUnit(app, unit, position):
     adjustedX, adjustedY = cellToPixel(app, row, col)
     if(isinstance(unit, (Troop, Building))):
         drawImage(unit.sprite, adjustedX, adjustedY, align='center')
-    drawLabel(unit.health, adjustedX, adjustedY, size=18, fill='white', bold=True)
+    drawLabel(rounded(unit.health), adjustedX, adjustedY, size=18, fill='white', bold=True)
+
+def rounded(n):
+    return math.floor(n+0.5) if n>0 else math.floor(n-0.5)
 
 def drawTimer(app):
     seconds = math.floor(app.remainingTime)

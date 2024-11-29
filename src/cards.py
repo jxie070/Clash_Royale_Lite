@@ -23,7 +23,7 @@ class Card:
             'Mini-Pekka':Troop('Mini-Pekka', 4, 'assets/mini-pekka.png', 'assets/mini-pekka_sprite.png', 1361, 720, 1, 2, 'ground', 'fast'),
             'Musketeer': Troop('Musketeer', 4, 'assets/musketeer.png', 'assets/musketeer_sprite.png', 720, 218, 1, 6, 'air/ground', 'medium'),
             'Archers': Troop('Archers', 3, 'assets/archers.png', 'assets/archers_sprite.png', 304, 107, 0.9, 6, 'air/ground', 'medium'),
-            'Cannon': Building('Cannon', 3, 'assets/cannon.png', 'assets/cannon_sprite.png', 824, 212, 0.9, 5.5, 'ground', 30)
+            'Cannon': Building('Cannon', 3, 'assets/cannon.png', 'assets/cannon_sprite.png', 824, 212, 0.9, 5.5, 'ground', 30, 824)
         }
 
 
@@ -51,7 +51,7 @@ class Spell(Card):
         return f'Spell(name={self.name}, cost={self.cost}, damage={self.damage}, towerDamage={self.towerDamage}, radius={self.radius})'
     
 class Building(Card):
-    def __init__(self, name, cost, image, sprite, health, damage, hitspeed, hitrange, targets, lifespan):
+    def __init__(self, name, cost, image, sprite, health, damage, hitspeed, hitrange, targets, lifespan, initialHealth):
         super().__init__(name, cost, image, sprite)
         self.health=health
         self.damage=damage
@@ -59,7 +59,8 @@ class Building(Card):
         self.hitrange=hitrange
         self.targets=targets
         self.lifespan=lifespan
+        self.initialHealth=initialHealth
 
     def __repr__(self):
-        return f'Building(name={self.name}, cost={self.cost}, health={self.health}, damage={self.damage}, hitspeed={self.hitspeed}, hitrange={self.hitrange}, targets={self.targets}, lifespan={self.lifespan})'
+        return f'Building(name={self.name}, cost={self.cost}, health={self.health}, damage={self.damage}, hitspeed={self.hitspeed}, hitrange={self.hitrange}, targets={self.targets}, lifespan={self.lifespan}, initialHealth={self.initialHealth})'
     
