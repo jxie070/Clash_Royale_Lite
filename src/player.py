@@ -1,5 +1,5 @@
 from cmu_graphics import *
-from cards import Card
+from entity import Card
 class Player:
     def __init__(self, name, cards):
         self.elixir=None

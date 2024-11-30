@@ -1,7 +1,6 @@
 from cmu_graphics import *
 from game import Game
-from cards import Card, Building, Troop, Spell
-from tower import Tower, Princess, King
+from entity import Card, Building, Troop, Spell, Tower, Princess, King
 from node import Node, astar
 import math, copy, random, time
 
@@ -285,7 +284,7 @@ def battle_onStep(app):
             elif(isinstance(friendlyUnit, Spell)):
                 radius=friendlyUnit.radius
                 for enemyUnit, enemyPosition in app.enemyUnits:
-                    if(getDistance(app, friendlyUnit, enemyUnit)<=radius):
+                    if(friendlyUnit.getDistance(app, enemyUnit)<=radius):
                         if(isinstance(enemyUnit, Tower)):
                             enemyUnit.health-=friendlyUnit.towerDamage
                         else:
@@ -319,29 +318,29 @@ def getPath(app, start, end, unit):
     hitrange=unit.hitrange
     return astar(app.board, newStart, newEnd, hitrange)
 
-def findIndex(app, unit, friendTF):
-    #where u and p represent unit, position
-    unitList=[]
-    positionList=[]
-    if(friendTF):
-        for u, p in app.friendlyUnits:
-            unitList.append(u)
-            positionList.append(p)
-    else:
-        for u, p in app.enemyUnits:
-            unitList.append(u)
-            positionList.append(p)
-    return unitList.index(unit)
+# def findIndex(app, unit, friendTF):
+#     #where u and p represent unit, position
+#     unitList=[]
+#     positionList=[]
+#     if(friendTF):
+#         for u, p in app.friendlyUnits:
+#             unitList.append(u)
+#             positionList.append(p)
+#     else:
+#         for u, p in app.enemyUnits:
+#             unitList.append(u)
+#             positionList.append(p)
+#     return unitList.index(unit)
 
-def getDistance(app, friendlyUnit, enemyUnit):
-    friendlyIndex=findIndex(app, friendlyUnit, True)
-    friendC, friendR=app.friendlyUnits[friendlyIndex][1]
-    enemyIndex=findIndex(app, enemyUnit, False)
-    enemyC, enemyR=app.enemyUnits[enemyIndex][1]
-    #print(f'enemyC, enemyR = {enemyC, enemyR}')
-    diffC, diffR =(enemyC-friendC), (enemyR-friendR)
-    #print(f'diffC, diffR: {diffC, diffR}')
-    return math.sqrt(diffC**2 + diffR**2)
+# def getDistance(app, friendlyUnit, enemyUnit):
+#     friendlyIndex=findIndex(app, friendlyUnit, True)
+#     friendC, friendR=app.friendlyUnits[friendlyIndex][1]
+#     enemyIndex=findIndex(app, enemyUnit, False)
+#     enemyC, enemyR=app.enemyUnits[enemyIndex][1]
+#     #print(f'enemyC, enemyR = {enemyC, enemyR}')
+#     diffC, diffR =(enemyC-friendC), (enemyR-friendR)
+#     #print(f'diffC, diffR: {diffC, diffR}')
+#     return math.sqrt(diffC**2 + diffR**2)
 
 def battle_redrawAll(app):
     #the background for the card deck in game
