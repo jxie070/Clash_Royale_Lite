@@ -8,10 +8,11 @@ import math, copy, random, time
 #This project in its entirety, the concepts, the sprites, etc. are taken from Supercell's game Clash Royale.
 #This project is meant to mimic some of the core features of Clash Royale
 #TODO:
-#1. For the processing of units in onStep, make it all into a singular function so that instead of copying the code for
-#enemy units, you can just reuse the function
-#2. add the targetting system: rn, all troops target everything (also fix pathing issue with range of giant/minipekka)
+#1. make A* work on air units
+#2. make sure the targetting system works, no way to test currently (also fix pathing issue with range of giant/minipekka)
 #3. Imrpove UI, comment code (A*, timer, @classmethod), etc.
+#4. Making buildings attack (like cannons)
+#5. get the font to work
 
 def onAppStart(app):
     app.stepsPerSecond=30
@@ -280,13 +281,16 @@ def processUnits(app, friendlyUnits, enemyUnits):
             elif(isinstance(friendlyUnit, Troop)):
                 enemyTarget, enemyDistance, enemyPosition, enemyIndex = friendlyUnit.findTarget(friendlyPosition, enemyUnits)
                 print(f'enemyDistance: {enemyDistance}, enemyPosition: {enemyPosition}, friendlyPosition: {friendlyPosition}')
-                path = getPath(app, friendlyPosition, enemyPosition, friendlyUnit)
+                friendlyCol, friendlyRow = friendlyPosition
+                enemyCol, enemyRow = enemyPosition
+                path = getPath(app, (math.floor(friendlyCol), math.floor(friendlyRow)), (math.floor(enemyCol), math.floor(enemyRow)), friendlyUnit)
                 print(f'Path: {path}')
                 if(len(path)==1):
                     friendlyUnit.attackTarget(app, enemyTarget, enemyIndex, enemyUnits)
                 else:
                     nextRow, nextCol=path[1]
-                    friendlyUnits[index]=(friendlyUnit, (nextCol, nextRow))
+                    newPosition=friendlyUnit.move(app, friendlyPosition, nextRow, nextCol)
+                    friendlyUnits[index]=(friendlyUnit, newPosition)
             elif(isinstance(friendlyUnit, Spell)):
                 radius=friendlyUnit.radius
                 for enemyUnit, enemyPosition in enemyUnits:
@@ -298,8 +302,6 @@ def processUnits(app, friendlyUnits, enemyUnits):
                 friendlyUnits.pop(index)
             elif(isinstance(friendlyUnit, Building)):
                 friendlyUnit.health-=(app.dt/friendlyUnit.lifespan)*friendlyUnit.initialHealth
-
-#DO LATER: MAKE TARGETTING SPECIFIC; CURRENTLY ALL TROOPS TARGET EACH OTHER
   
 def getPath(app, start, end, unit):
     startCol, startRow = start
@@ -307,7 +309,8 @@ def getPath(app, start, end, unit):
     newStart = startRow, startCol
     newEnd = endRow, endCol
     hitrange=unit.hitrange
-    return astar(app.board, newStart, newEnd, hitrange)
+    targetted=unit.targetted
+    return astar(app.board, newStart, newEnd, hitrange, targetted)
 
 def battle_redrawAll(app):
     #the background for the card deck in game

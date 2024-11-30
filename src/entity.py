@@ -1,6 +1,20 @@
 import copy, time, math
 class Entity():
+    #movement string to tiles/second
+    movementDict={
+        'slow': 0.75,
+        'medium': 1,
+        'fast': 1.5,
+        'very-fast': 2
+    }
     #wrapper class that allows Cards and Tower classes to use the same functions without having to copy/paste
+    def move(self, app, friendlyPosition, nextRow, nextCol):
+        tilesPerSecond=Entity.movementDict[self.speed]
+        currCol, currRow = friendlyPosition
+        #dRow and dCol should be the signs
+        dRow, dCol = nextRow-math.floor(currRow), nextCol-math.floor(currCol)
+        return (currCol + app.dt*tilesPerSecond*dCol, currRow + app.dt*tilesPerSecond*dRow)
+
     def attackTarget(self, app, enemyUnit, enemyIndex, otherList):
         currTime=time.time()
         if(currTime-self.lastAttackTime>=self.hitspeed):
@@ -100,7 +114,7 @@ class Building(Card):
         self.hitspeed=hitspeed
         self.hitrange=hitrange
         self.targets=targets
-        self.targettede=targetted
+        self.targetted=targetted
         self.lifespan=lifespan
         self.initialHealth=initialHealth
 
