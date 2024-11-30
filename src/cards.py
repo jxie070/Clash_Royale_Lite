@@ -1,4 +1,6 @@
-import copy
+from tower import Tower, King, Princess
+from main import getDistance
+import copy, time
 class Card:
     cardLibrary={}
     def __init__(self, name, cost, image, sprite):
@@ -6,6 +8,7 @@ class Card:
         self.cost=cost
         self.image=image
         self.sprite=sprite
+        self.lastAttackTime=0
 
     def __repr__(self):
         return f'Card(name={self.name}, cost={self.cost})'
@@ -26,6 +29,30 @@ class Card:
             'Cannon': Building('Cannon', 3, 'assets/cannon.png', 'assets/cannon_sprite.png', 824, 212, 0.9, 5.5, 'ground', 30, 824)
         }
 
+    def attackTarget(self, app, enemyUnit, enemyIndex):
+        currTime=time.time()
+        if(currTime-self.lastAttackTime>=self.hitspeed):
+            enemyUnit.health-=self.damage
+            self.lastAttackTime=currTime
+            if(enemyUnit.health<=0):
+                if(isinstance(enemyUnit, King)):
+                    app.gameOver=True
+                app.enemyUnits.pop(enemyIndex)
+
+    def findTarget(self, app):
+        #unitTarget=unit.targets
+        closestTarget=None
+        closestDistance=None
+        closestPosition=None
+        closestIndex=None
+        for enemyIndex, (enemyUnit, enemyPosition) in enumerate(app.enemyUnits):
+            currDistance = getDistance(app, self, enemyUnit)
+            if(closestTarget==None or currDistance<closestDistance):
+                closestTarget=enemyUnit
+                closestDistance=currDistance
+                closestPosition=enemyPosition
+                closestIndex=enemyIndex
+        return closestTarget, closestDistance, closestPosition, closestIndex
 
 class Troop(Card):
     def __init__(self, name, cost, image, sprite, health, damage, hitspeed, hitrange, targets, speed):

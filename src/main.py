@@ -269,14 +269,16 @@ def battle_onStep(app):
             if(not isinstance(friendlyUnit, Spell) and friendlyUnit.health<=0):
                 app.friendlyUnits.pop(index)     
             if(isinstance(friendlyUnit, Tower)):
-                continue
+                enemyTarget, enemyDistance, enemyPosition, enemyIndex = friendlyUnit.findTarget(app)
+                if(enemyDistance<=friendlyUnit.hitrange):
+                    friendlyUnit.attackTarget(app, enemyTarget, enemyIndex)
             elif(isinstance(friendlyUnit, Troop)):
-                enemyTarget, enemyDistance, enemyPosition, enemyIndex = findTarget(app, friendlyUnit)
+                enemyTarget, enemyDistance, enemyPosition, enemyIndex = friendlyUnit.findTarget(app)
                 print(f'enemyDistance: {enemyDistance}, enemyPosition: {enemyPosition}, friendlyPosition: {friendlyPosition}')
                 path = getPath(app, friendlyPosition, enemyPosition, friendlyUnit)
                 print(f'Path: {path}')
                 if(len(path)==1):
-                    attackTarget(app, friendlyUnit, enemyTarget, enemyIndex, friendlyUnit.hitspeed)
+                    friendlyUnit.attackTarget(app, enemyTarget, enemyIndex)
                 else:
                     nextRow, nextCol=path[1]
                     app.friendlyUnits[index]=(friendlyUnit, (nextCol, nextRow))
@@ -292,29 +294,22 @@ def battle_onStep(app):
             elif(isinstance(friendlyUnit, Building)):
                 friendlyUnit.health-=(app.dt/friendlyUnit.lifespan)*friendlyUnit.initialHealth
 
-def attackTarget(app, friendlyUnit, enemyUnit, enemyIndex, hitspeed):
-    enemyUnit.health-=friendlyUnit.damage
-    if(enemyUnit.health<=0):
-        if(isinstance(enemyUnit, King)):
-            app.gameOver=True
-        app.enemyUnits.pop(enemyIndex)
-
 #DO LATER: MAKE TARGETTING SPECIFIC; CURRENTLY ALL TROOPS TARGET EACH OTHER
-def findTarget(app, unit):
-    #unitTarget=unit.targets
-    closestTarget=None
-    closestDistance=None
-    closestPosition=None
-    closestIndex=None
-    #movementVector=None
-    for enemyIndex, (enemyUnit, enemyPosition) in enumerate(app.enemyUnits):
-        currDistance = getDistance(app, unit, enemyUnit)
-        if(closestTarget==None or currDistance<closestDistance):
-            closestTarget=enemyUnit
-            closestDistance=currDistance
-            closestPosition=enemyPosition
-            closestIndex=enemyIndex
-    return closestTarget, closestDistance, closestPosition, closestIndex
+# def findTarget(app, unit):
+#     #unitTarget=unit.targets
+#     closestTarget=None
+#     closestDistance=None
+#     closestPosition=None
+#     closestIndex=None
+#     #movementVector=None
+#     for enemyIndex, (enemyUnit, enemyPosition) in enumerate(app.enemyUnits):
+#         currDistance = getDistance(app, unit, enemyUnit)
+#         if(closestTarget==None or currDistance<closestDistance):
+#             closestTarget=enemyUnit
+#             closestDistance=currDistance
+#             closestPosition=enemyPosition
+#             closestIndex=enemyIndex
+#     return closestTarget, closestDistance, closestPosition, closestIndex
   
 def getPath(app, start, end, unit):
     startCol, startRow = start
