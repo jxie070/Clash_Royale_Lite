@@ -1,7 +1,7 @@
 import copy, time, math
 class Entity():
     #wrapper class that allows Cards and Tower classes to use the same functions without having to copy/paste
-    def attackTarget(self, app, enemyUnit, enemyIndex):
+    def attackTarget(self, app, enemyUnit, enemyIndex, otherList):
         currTime=time.time()
         if(currTime-self.lastAttackTime>=self.hitspeed):
             enemyUnit.health-=self.damage
@@ -9,44 +9,34 @@ class Entity():
             if(enemyUnit.health<=0):
                 if(isinstance(enemyUnit, King)):
                     app.gameOver=True
-                app.enemyUnits.pop(enemyIndex)
+                otherList.pop(enemyIndex)
 
-    def findTarget(self, app):
-        #unitTarget=unit.targets
+    def findTarget(self, selfPosition, otherList):
         closestTarget=None
         closestDistance=None
         closestPosition=None
         closestIndex=None
-        for enemyIndex, (enemyUnit, enemyPosition) in enumerate(app.enemyUnits):
-            currDistance = self.getDistance(app, enemyUnit)
+        for enemyIndex, (enemyUnit, enemyPosition) in enumerate(otherList):
+            if not self.sharedTarget(enemyUnit):
+                continue
+            currDistance = self.getDistance(selfPosition, enemyPosition)
             if(closestTarget==None or currDistance<closestDistance):
                 closestTarget=enemyUnit
                 closestDistance=currDistance
                 closestPosition=enemyPosition
                 closestIndex=enemyIndex
         return closestTarget, closestDistance, closestPosition, closestIndex
+    
+    def sharedTarget(self, other):
+        return len(set(self.targets)&set(other.targetted))>=1
 
-    def getDistance(self, app, enemyUnit):
-        friendlyIndex=self.findIndex(app, True)
-        friendC, friendR = app.friendlyUnits[friendlyIndex][1]
-        enemyIndex=enemyUnit.findIndex(app, False)
-        enemyC, enemyR = app.enemyUnits[enemyIndex][1]
+    def getDistance(self, selfPosition, otherPosition):
+        #friendlyIndex=self.findIndex(app, True)
+        friendC, friendR = selfPosition
+        #enemyIndex=enemyUnit.findIndex(app, False)
+        enemyC, enemyR = otherPosition
         diffC, diffR =(enemyC-friendC), (enemyR-friendR)
         return math.sqrt(diffC**2 + diffR**2)
-    
-    def findIndex(self, app, friendTF):
-    #where u and p represent unit, position
-        unitList=[]
-        positionList=[]
-        if(friendTF):
-            for u, p in app.friendlyUnits:
-                unitList.append(u)
-                positionList.append(p)
-        else:
-            for u, p in app.enemyUnits:
-                unitList.append(u)
-                positionList.append(p)
-        return unitList.index(self)
 
 class Card(Entity):
     cardLibrary={}
@@ -68,18 +58,18 @@ class Card(Entity):
         cls.cardLibrary={
             'Fireball': Spell('Fireball', 4, 'assets/fireball.png', None, 689, 207, 2.5),
             'Arrows': Spell('Arrows', 3, 'assets/arrows.png', None, 366, 93, 4,),
-            'Giant': Troop('Giant', 5, 'assets/giant.png', 'assets/giant_sprite.png', 4091, 254, 1.5, 2, 'buildings', 'slow'),
-            'Knight': Troop('Knight', 3, 'assets/knight.png', 'assets/knight_sprite.png', 1766, 202, 1, 2, 'ground', 'medium'),
-            'Mini-Pekka':Troop('Mini-Pekka', 4, 'assets/mini-pekka.png', 'assets/mini-pekka_sprite.png', 1361, 720, 1, 2, 'ground', 'fast'),
-            'Musketeer': Troop('Musketeer', 4, 'assets/musketeer.png', 'assets/musketeer_sprite.png', 720, 218, 1, 6, 'air/ground', 'medium'),
-            'Archers': Troop('Archers', 3, 'assets/archers.png', 'assets/archers_sprite.png', 304, 107, 0.9, 6, 'air/ground', 'medium'),
-            'Cannon': Building('Cannon', 3, 'assets/cannon.png', 'assets/cannon_sprite.png', 824, 212, 0.9, 5.5, 'ground', 30, 824)
+            'Giant': Troop('Giant', 5, 'assets/giant.png', 'assets/giant_sprite.png', 4091, 254, 1.5, 2, ['buildings'], ['ground'], 'slow'),
+            'Knight': Troop('Knight', 3, 'assets/knight.png', 'assets/knight_sprite.png', 1766, 202, 1, 2, ['ground'], ['ground'], 'medium'),
+            'Mini-Pekka':Troop('Mini-Pekka', 4, 'assets/mini-pekka.png', 'assets/mini-pekka_sprite.png', 1361, 720, 1, 2, ['ground'], ['ground'], 'fast'),
+            'Musketeer': Troop('Musketeer', 4, 'assets/musketeer.png', 'assets/musketeer_sprite.png', 720, 218, 1, 6, ['air', 'ground'], ['ground'], 'medium'),
+            'Archers': Troop('Archers', 3, 'assets/archers.png', 'assets/archers_sprite.png', 304, 107, 0.9, 6, ['air', 'ground'], ['ground'], 'medium'),
+            'Cannon': Building('Cannon', 3, 'assets/cannon.png', 'assets/cannon_sprite.png', 824, 212, 0.9, 5.5, ['ground'], ['ground'], 30, 824)
         }
 
     
 
 class Troop(Card):
-    def __init__(self, name, cost, image, sprite, health, damage, hitspeed, hitrange, targets, speed):
+    def __init__(self, name, cost, image, sprite, health, damage, hitspeed, hitrange, targets, targetted, speed):
         super().__init__(name, cost, image, sprite)
         self.health=health
         self.damage=damage
@@ -87,6 +77,7 @@ class Troop(Card):
         self.hitrange=hitrange
         self.targets=targets
         self.speed=speed
+        self.targetted=targetted
 
     def __repr__(self):
         return f'Troop(name={self.name}, cost={self.cost}, health={self.health}, damage={self.damage}, hitspeed={self.hitspeed}, hitrange={self.hitrange}, targets={self.targets}, speed={self.speed})'
@@ -102,13 +93,14 @@ class Spell(Card):
         return f'Spell(name={self.name}, cost={self.cost}, damage={self.damage}, towerDamage={self.towerDamage}, radius={self.radius})'
     
 class Building(Card):
-    def __init__(self, name, cost, image, sprite, health, damage, hitspeed, hitrange, targets, lifespan, initialHealth):
+    def __init__(self, name, cost, image, sprite, health, damage, hitspeed, hitrange, targets, targetted, lifespan, initialHealth):
         super().__init__(name, cost, image, sprite)
         self.health=health
         self.damage=damage
         self.hitspeed=hitspeed
         self.hitrange=hitrange
         self.targets=targets
+        self.targettede=targetted
         self.lifespan=lifespan
         self.initialHealth=initialHealth
 
@@ -117,12 +109,15 @@ class Building(Card):
     
 class Tower(Entity):
     towerLibrary={}
-    def __init__(self, health, damage, hitrange, hitspeed, image):
+    def __init__(self, health, damage, hitrange, hitspeed, targets, targetted, image):
         self.health=health
         self.damage=damage
         self.hitrange=hitrange
         self.hitspeed=hitspeed
+        self.targets=targets
+        self.targetted=targetted
         self.image=None
+        self.lastAttackTime=0
 
     def __repr__(self):
         return f'Tower(health={self.health}, damage={self.damage}, hitrange={self.hitrange}, hitspeed={self.hitspeed})'
@@ -133,21 +128,21 @@ class Tower(Entity):
     @classmethod
     def createTowerLibrary(cls):
         cls.towerLibrary={
-            'PrincessLeft': Princess(3052, 109, 7.5, 0.8, None),
-            'PrincessRight': Princess(3052, 109, 7.5, 0.8, None),
-            'King': King(4824, 109, 7, 1, None)
+            'PrincessLeft': Princess(3052, 109, 7.5, 0.8, ['air', 'ground', 'buildings'], ['air', 'ground', 'buildings'], None),
+            'PrincessRight': Princess(3052, 109, 7.5, 0.8, ['air', 'ground', 'buildings'], ['air', 'ground', 'buildings'], None),
+            'King': King(4824, 109, 7, 1, ['air', 'ground', 'buildings'], ['air', 'ground', 'buildings'], None)
         }
 
 class Princess(Tower):
-    def __init__(self, health, damage, hitrange, hitspeed, image):
-        super().__init__(health, damage, hitrange, hitspeed, image)
+    def __init__(self, health, damage, hitrange, hitspeed, targets, targetted, image):
+        super().__init__(health, damage, hitrange, hitspeed, targets, targetted, image)
 
     def __repr__(self):
         return f'Princess(health={self.health}, damage={self.damage}, hitrange={self.hitrange}, hitspeed={self.hitspeed})'
 
 class King(Tower):
-    def __init__(self, health, damage, hitrange, hitspeed, image):
-        super().__init__(health, damage, hitrange, hitspeed, image)
+    def __init__(self, health, damage, hitrange, hitspeed, targets, targetted, image):
+        super().__init__(health, damage, hitrange, hitspeed, targets, targetted, image)
 
     def __repr__(self):
         return f'King(health={self.health}, damage={self.damage}, hitrange={self.hitrange}, hitspeed={self.hitspeed})'

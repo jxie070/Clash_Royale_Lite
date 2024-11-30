@@ -8,9 +8,10 @@ import math, copy, random, time
 #This project in its entirety, the concepts, the sprites, etc. are taken from Supercell's game Clash Royale.
 #This project is meant to mimic some of the core features of Clash Royale
 #TODO:
-#1. write onStep function to animate cards
-#2. draw each card in units with their position
-#3. write algorihm that finds each card's target, whether or not target is in range, and add pathing blocks to board
+#1. For the processing of units in onStep, make it all into a singular function so that instead of copying the code for
+#enemy units, you can just reuse the function
+#2. add the targetting system: rn, all troops target everything (also fix pathing issue with range of giant/minipekka)
+#3. Imrpove UI, comment code (A*, timer, @classmethod), etc.
 
 def onAppStart(app):
     app.stepsPerSecond=30
@@ -263,52 +264,42 @@ def battle_onStep(app):
         elixirRate=1/2.8
         app.battle.p1.elixir=min(app.battle.p1.elixir+app.dt*elixirRate*app.constant, 10)
         app.battle.p2.elixir=min(app.battle.p2.elixir+app.dt*elixirRate*app.constant, 10)
-        #movement
-        for index, (friendlyUnit, friendlyPosition) in enumerate(app.friendlyUnits):
+        #friendly units
+        processUnits(app, app.friendlyUnits, app.enemyUnits)
+        processUnits(app,app.enemyUnits, app.friendlyUnits)
+        
+
+def processUnits(app, friendlyUnits, enemyUnits):
+    for index, (friendlyUnit, friendlyPosition) in enumerate(friendlyUnits):
             if(not isinstance(friendlyUnit, Spell) and friendlyUnit.health<=0):
-                app.friendlyUnits.pop(index)     
+                friendlyUnits.pop(index)     
             if(isinstance(friendlyUnit, Tower)):
-                enemyTarget, enemyDistance, enemyPosition, enemyIndex = friendlyUnit.findTarget(app)
+                enemyTarget, enemyDistance, enemyPosition, enemyIndex = friendlyUnit.findTarget(friendlyPosition, enemyUnits)
                 if(enemyDistance<=friendlyUnit.hitrange):
-                    friendlyUnit.attackTarget(app, enemyTarget, enemyIndex)
+                    friendlyUnit.attackTarget(app, enemyTarget, enemyIndex, enemyUnits)
             elif(isinstance(friendlyUnit, Troop)):
-                enemyTarget, enemyDistance, enemyPosition, enemyIndex = friendlyUnit.findTarget(app)
+                enemyTarget, enemyDistance, enemyPosition, enemyIndex = friendlyUnit.findTarget(friendlyPosition, enemyUnits)
                 print(f'enemyDistance: {enemyDistance}, enemyPosition: {enemyPosition}, friendlyPosition: {friendlyPosition}')
                 path = getPath(app, friendlyPosition, enemyPosition, friendlyUnit)
                 print(f'Path: {path}')
                 if(len(path)==1):
-                    friendlyUnit.attackTarget(app, enemyTarget, enemyIndex)
+                    friendlyUnit.attackTarget(app, enemyTarget, enemyIndex, enemyUnits)
                 else:
                     nextRow, nextCol=path[1]
-                    app.friendlyUnits[index]=(friendlyUnit, (nextCol, nextRow))
+                    friendlyUnits[index]=(friendlyUnit, (nextCol, nextRow))
             elif(isinstance(friendlyUnit, Spell)):
                 radius=friendlyUnit.radius
-                for enemyUnit, enemyPosition in app.enemyUnits:
-                    if(friendlyUnit.getDistance(app, enemyUnit)<=radius):
+                for enemyUnit, enemyPosition in enemyUnits:
+                    if(friendlyUnit.getDistance(friendlyPosition, enemyPosition)<=radius):
                         if(isinstance(enemyUnit, Tower)):
                             enemyUnit.health-=friendlyUnit.towerDamage
                         else:
                             enemyUnit.health-=friendlyUnit.damage
-                app.friendlyUnits.pop(index)
+                friendlyUnits.pop(index)
             elif(isinstance(friendlyUnit, Building)):
                 friendlyUnit.health-=(app.dt/friendlyUnit.lifespan)*friendlyUnit.initialHealth
 
 #DO LATER: MAKE TARGETTING SPECIFIC; CURRENTLY ALL TROOPS TARGET EACH OTHER
-# def findTarget(app, unit):
-#     #unitTarget=unit.targets
-#     closestTarget=None
-#     closestDistance=None
-#     closestPosition=None
-#     closestIndex=None
-#     #movementVector=None
-#     for enemyIndex, (enemyUnit, enemyPosition) in enumerate(app.enemyUnits):
-#         currDistance = getDistance(app, unit, enemyUnit)
-#         if(closestTarget==None or currDistance<closestDistance):
-#             closestTarget=enemyUnit
-#             closestDistance=currDistance
-#             closestPosition=enemyPosition
-#             closestIndex=enemyIndex
-#     return closestTarget, closestDistance, closestPosition, closestIndex
   
 def getPath(app, start, end, unit):
     startCol, startRow = start
@@ -317,30 +308,6 @@ def getPath(app, start, end, unit):
     newEnd = endRow, endCol
     hitrange=unit.hitrange
     return astar(app.board, newStart, newEnd, hitrange)
-
-# def findIndex(app, unit, friendTF):
-#     #where u and p represent unit, position
-#     unitList=[]
-#     positionList=[]
-#     if(friendTF):
-#         for u, p in app.friendlyUnits:
-#             unitList.append(u)
-#             positionList.append(p)
-#     else:
-#         for u, p in app.enemyUnits:
-#             unitList.append(u)
-#             positionList.append(p)
-#     return unitList.index(unit)
-
-# def getDistance(app, friendlyUnit, enemyUnit):
-#     friendlyIndex=findIndex(app, friendlyUnit, True)
-#     friendC, friendR=app.friendlyUnits[friendlyIndex][1]
-#     enemyIndex=findIndex(app, enemyUnit, False)
-#     enemyC, enemyR=app.enemyUnits[enemyIndex][1]
-#     #print(f'enemyC, enemyR = {enemyC, enemyR}')
-#     diffC, diffR =(enemyC-friendC), (enemyR-friendR)
-#     #print(f'diffC, diffR: {diffC, diffR}')
-#     return math.sqrt(diffC**2 + diffR**2)
 
 def battle_redrawAll(app):
     #the background for the card deck in game
@@ -377,6 +344,7 @@ def battle_redrawAll(app):
             else:
                 drawCell(app, row, col)
     #drawing the red towers
+    #for units in app.friendlyUnits: if unit==Princess Left draw __
     drawImage('assets/red_princess_tower.png', 53, 80, width=80, height=70)
     drawImage('assets/red_princess_tower.png', 347, 80, width=80, height=70)
     drawImage('assets/red_king_tower.png', 187, 0, width=106, height=81)
