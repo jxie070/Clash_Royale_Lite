@@ -16,18 +16,10 @@ class Node:
         return self.f() < other.f()
 
 def distance(node1, node2):
-    #return ((node1.x - node2[0]) ** 2 + (node1.y - node2[1]) ** 2) ** 0.5
     return math.sqrt((node1.x - node2.x)**2 + (node1.y - node2.y)**2)
 
 def astar(grid, start, end, hitrange, targetted):
-    #from Google AI
-    """
-    A* algorithm implementation
-    :param grid: 2D list representing the map (0 for walkable, 1 for obstacles)
-    :param start: Tuple representing the start coordinates (x, y)
-    :param end: Tuple representing the end coordinates (x, y)
-    :return: List of tuples representing the path, or None if no path found
-    """
+    #heavily inspired from Google AI after searching "What might an A* algorithm look like that finds a path from one coordintate to another"
     open_set = []
     closed_set = set()
 
@@ -55,6 +47,7 @@ def astar(grid, start, end, hitrange, targetted):
                 neighbor_node.h = abs(neighbor_x - end_node.x) + abs(neighbor_y - end_node.y)
                 neighbor_node.parent = current_node
                 heapq.heappush(open_set, neighbor_node)
+                #air units pseudocode
             # else:
             #     if 0<=neighbor_x<len(grid) and 0<=neighbor_y<len(grid[0]) and (grid[neighbor_x][neighbor_y] in [0, 2]) and (neighbor_x, neighbor_y) not in closed_set:
             #         neighbor_node = Node(neighbor_x, neighbor_y)

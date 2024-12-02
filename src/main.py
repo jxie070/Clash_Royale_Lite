@@ -6,24 +6,29 @@ import math, copy, random, time
 
 #Jack Xie, jackx2
 #This project in its entirety, the concepts, the sprites, etc. are taken from Supercell's game Clash Royale.
+#All sprites can be found at https://github.com/smlbiobot/cr-assets-png/tree/master/assets
+#Any other uncited images are from in game screenshots from Supercell's game Clash Royale
 #This project is meant to mimic some of the core features of Clash Royale
 #TODO:
-#1. make A* work on air units
+#spell circle needs to go away after spell is casted
+#1. make A* work on air units, add the attribute targetting so tower doenst retarget to closest target if troop walks in front of another
 #2. make sure the targetting system works, no way to test currently (also fix pathing issue with range of giant/minipekka)
 #3. Imrpove UI, comment code (A*, timer, @classmethod), etc.
 #4. Making buildings attack (like cannons)
 #5. get the font to work
-
+#6. Fix bug with destroying king tower, also when both towers destroyed, pathing is weird
+#6. Once tower is destroyed, remove the black tiles to allow pathing to continue
+#7. fireballs dont work on archers?
 def onAppStart(app):
-    app.stepsPerSecond=30
+    app.stepsPerSecond=1000
     app.width=480
     app.height=800
     app.gold=0
     app.gems=0
     app.experience=0
-    app.username='Atayxii'
+    app.username='User'
+    app.botDeck=['Archers', 'Archers', 'Archers', 'Archers', 'Archers', 'Archers', 'Archers', 'Archers']
     app.deck=['Archers', 'Knight', 'Giant', 'Fireball', 'Arrows', 'Cannon', 'Mini-Pekka', 'Musketeer']
-    app.botDeck=['Archers', 'Knight', 'Giant', 'Fireball', 'Arrows', 'Cannon', 'Mini-Pekka', 'Musketeer']
     app.font='supercell_magic.ttf'
 
 def main_redrawAll(app):
@@ -42,7 +47,7 @@ def main_redrawAll(app):
     drawImage('assets/experience_icon.png', 10, 12, width=40, height=40)
     drawLabel(app.experience, 60, 35, size=32, bold=True, fill='white', align='left')
     drawImage('assets/settings_icon.png', 15, 250, width=75, height=75)
-    drawLabel(f'Welcome, {app.username}' if app.username!='' else 'Welcome!', 240, 120, size=48, fill='white', bold=True)
+    drawLabel(f'Welcome, {app.username}!', 240, 120, size=48, fill='white', bold=True)
     #chest slots
     drawImage('assets/chest_slot.png', 0, 580, width=120, height=150)
     drawImage('assets/chest_slot.png', 120, 580, width=120, height=150)
@@ -212,6 +217,9 @@ def battle_onScreenActivate(app):
     app.friendlyUnits=[]
     app.enemyUnits=[]
     app.battle.shuffleStartingHands()
+    #getting the lists of cards
+    app.battle.p1.cards=app.deck
+    app.battle.p2.cards=app.botDeck
     #converting the cardsList into a list of card objects
     app.battle.p1.cardObjects=[Card.cardLibrary[card] for card in app.battle.p1.cards]
     app.battle.p2.cardObjects=[Card.cardLibrary[card] for card in app.battle.p2.cards]
@@ -219,8 +227,10 @@ def battle_onScreenActivate(app):
     app.board = app.battle.createBoard()
     app.rows=len(app.board)
     app.cols=len(app.board[0])
-    app.selectedCard=None
-    app.selectedCell=None
+    app.friendlySelectedCard=None
+    app.enemySelectedCard=None
+    app.friendlySelectedCell=None
+    app.enemySelectedCell=None
     app.boardLeft=0
     app.boardTop=0
     app.boardWidth=480
@@ -265,15 +275,19 @@ def battle_onStep(app):
         elixirRate=1/2.8
         app.battle.p1.elixir=min(app.battle.p1.elixir+app.dt*elixirRate*app.constant, 10)
         app.battle.p2.elixir=min(app.battle.p2.elixir+app.dt*elixirRate*app.constant, 10)
-        #friendly units
+        #enemy bot moves
+        enemyPlaceCard(app)
+        #making units move/attack
         processUnits(app, app.friendlyUnits, app.enemyUnits)
         processUnits(app,app.enemyUnits, app.friendlyUnits)
-        
 
 def processUnits(app, friendlyUnits, enemyUnits):
     for index, (friendlyUnit, friendlyPosition) in enumerate(friendlyUnits):
+            #if any friendly units have less than 0 health, delete them from the units list
             if(not isinstance(friendlyUnit, Spell) and friendlyUnit.health<=0):
-                friendlyUnits.pop(index)     
+                friendlyUnits.pop(index)
+                #if(len(friendlyUnits)==0 or len(enemyUnits)==0):
+                 #   app.gameOver=True  
             if(isinstance(friendlyUnit, Tower)):
                 enemyTarget, enemyDistance, enemyPosition, enemyIndex = friendlyUnit.findTarget(friendlyPosition, enemyUnits)
                 if(enemyDistance<=friendlyUnit.hitrange):
@@ -299,9 +313,14 @@ def processUnits(app, friendlyUnits, enemyUnits):
                             enemyUnit.health-=friendlyUnit.towerDamage
                         else:
                             enemyUnit.health-=friendlyUnit.damage
+                        if(enemyUnit.health<=0):
+                            enemyUnits.pop(index)
                 friendlyUnits.pop(index)
             elif(isinstance(friendlyUnit, Building)):
                 friendlyUnit.health-=(app.dt/friendlyUnit.lifespan)*friendlyUnit.initialHealth
+                enemyTarget, enemyDistance, enemyPosition, enemyIndex = friendlyUnit.findTarget(friendlyPosition, enemyUnits)
+                if(enemyDistance<=friendlyUnit.hitrange):
+                    friendlyUnit.attackTarget(app, enemyTarget, enemyIndex, enemyUnits)
   
 def getPath(app, start, end, unit):
     startCol, startRow = start
@@ -340,7 +359,7 @@ def battle_redrawAll(app):
     #creating the board
     for row in range(app.rows):
         for col in range(app.cols):
-            if((col, row)==app.selectedCell):
+            if((col, row)==app.friendlySelectedCell):
                 cellLeft, cellTop = getCellLeftTop(app, row, col)
                 cellWidth, cellHeight = getCellSize(app)
                 drawRect(cellLeft, cellTop, cellWidth, cellHeight, fill='white', opacity=50)
@@ -348,6 +367,7 @@ def battle_redrawAll(app):
                 drawCell(app, row, col)
     #drawing the red towers
     #for units in app.friendlyUnits: if unit==Princess Left draw __
+    #if princess left in app.units draw, put rubble underneath so if u dont draw it, it shows rubble
     drawImage('assets/red_princess_tower.png', 53, 80, width=80, height=70)
     drawImage('assets/red_princess_tower.png', 347, 80, width=80, height=70)
     drawImage('assets/red_king_tower.png', 187, 0, width=106, height=81)
@@ -370,11 +390,11 @@ def battle_redrawAll(app):
 
 
 def drawSpellBorders(app):
-    if(isinstance(app.selectedCard, Spell) and app.selectedCell!=None):
-        radius=app.selectedCard.radius
-        col, row = app.selectedCell
+    if(isinstance(app.friendlySelectedCard, Spell) and app.friendlySelectedCell!=None):
+        radius=app.friendlySelectedCard.radius
+        col, row = app.friendlySelectedCell
         adjustedX, adjustedY = cellToPixel(app, row, col)
-        if(app.selectedCell!=None):
+        if(app.friendlySelectedCell!=None):
             drawOval(adjustedX, adjustedY, radius*app.colWidth*2, radius*app.rowHeight*2, fill='white', opacity=25)
 
 def cellToPixel(app, row, col):
@@ -423,48 +443,77 @@ def battle_onKeyPress(app, key):
     if(key=='escape'):
         setActiveScreen('main')
     elif(key=='1'):
-        app.selectedCard=app.battle.p1.cardObjects[0]
+        app.friendlySelectedCard=app.battle.p1.cardObjects[0]
         app.card1bg='white'
         app.card2bg=rgb(95, 66, 50)
         app.card3bg=rgb(95, 66, 50)
         app.card4bg=rgb(95, 66, 50)
-        print('Selected Card:', app.selectedCard.name)
+        print('Selected Card:', app.friendlySelectedCard.name)
     elif(key=='2'):
-        app.selectedCard=app.battle.p1.cardObjects[1]
+        app.friendlySelectedCard=app.battle.p1.cardObjects[1]
         app.card2bg='white'
         app.card1bg=rgb(95, 66, 50)
         app.card3bg=rgb(95, 66, 50)
         app.card4bg=rgb(95, 66, 50)        
-        print('Selected Card:', app.selectedCard.name)
+        print('Selected Card:', app.friendlySelectedCard.name)
     elif(key=='3'):
-        app.selectedCard=app.battle.p1.cardObjects[2]
+        app.friendlySelectedCard=app.battle.p1.cardObjects[2]
         app.card3bg='white'
         app.card1bg=rgb(95, 66, 50)
         app.card2bg=rgb(95, 66, 50)
         app.card4bg=rgb(95, 66, 50)
-        print('Selected Card:', app.selectedCard.name)
+        print('Selected Card:', app.friendlySelectedCard.name)
     elif(key=='4'):
-        app.selectedCard=app.battle.p1.cardObjects[3]
+        app.friendlySelectedCard=app.battle.p1.cardObjects[3]
         app.card4bg='white'
         app.card1bg=rgb(95, 66, 50)
         app.card2bg=rgb(95, 66, 50)
         app.card3bg=rgb(95, 66, 50)
-        print('Selected Card:', app.selectedCard.name)
+        print('Selected Card:', app.friendlySelectedCard.name)
 
 def battle_onMouseMove(app, mouseX, mouseY):
-    app.selectedCell=battle_getCell(app, mouseX, mouseY)
-
+    app.friendlySelectedCell=battle_getCell(app, mouseX, mouseY)
 
 def battle_onMousePress(app, mouseX, mouseY):
     selectedCell=battle_getCell(app, mouseX, mouseY)
     print(selectedCell)
-    if(app.selectedCard!=None):
-        selectedIndex=app.battle.p1.cards.index(app.selectedCard.name)
+    if(selectedCell==None):
+        if(90<=mouseX<=165 and 660<=mouseY<=750):
+            app.friendlySelectedCard=app.battle.p1.cardObjects[0]
+            app.card1bg='white'
+            app.card2bg=rgb(95, 66, 50)
+            app.card3bg=rgb(95, 66, 50)
+            app.card4bg=rgb(95, 66, 50)
+            print('Selected Card:', app.friendlySelectedCard.name) 
+        elif(175<=mouseX<=250 and 660<=mouseY<=750):
+            app.friendlySelectedCard=app.battle.p1.cardObjects[1]
+            app.card2bg='white'
+            app.card1bg=rgb(95, 66, 50)
+            app.card3bg=rgb(95, 66, 50)
+            app.card4bg=rgb(95, 66, 50)
+            print('Selected Card:', app.friendlySelectedCard.name) 
+        elif(260<=mouseX<=335 and 660<=mouseY<=750):
+            app.friendlySelectedCard=app.battle.p1.cardObjects[2]
+            app.card3bg='white'
+            app.card1bg=rgb(95, 66, 50)
+            app.card2bg=rgb(95, 66, 50)
+            app.card4bg=rgb(95, 66, 50)
+            print('Selected Card:', app.friendlySelectedCard.name)
+        elif(345<=mouseX<=420 and 660<=mouseY<=750):
+            app.friendlySelectedCard=app.battle.p1.cardObjects[3]
+            app.card4bg='white'
+            app.card1bg=rgb(95, 66, 50)
+            app.card2bg=rgb(95, 66, 50)
+            app.card3bg=rgb(95, 66, 50)
+            print('Selected Card:', app.friendlySelectedCard.name) 
+    if(app.friendlySelectedCard!=None):
+        selectedIndex=app.battle.p1.cards.index(app.friendlySelectedCard.name)
         if(selectedCell!=None):
-            print(selectedCell, app.selectedCard.name)
-            if(validPosition(app, app.selectedCard, selectedCell)):
+            print(selectedCell, app.friendlySelectedCard.name)
+            if(validPosition(app, app.friendlySelectedCard, selectedCell)):
                 #print('Valid Position!')
-                app.battle.p1.deployCard(app, app.selectedCard, selectedCell, selectedIndex)
+                app.battle.p1.deployCard(app, app.friendlySelectedCard, selectedCell, selectedIndex, app.friendlyUnits, app.friendlySelectedCard)
+                app.friendlySelectedCard=None
                 #print(f'friendlyUnits: {app.friendlyUnits}')
             else:
                 print('Invalid Position!')
@@ -479,6 +528,11 @@ def validPosition(app, selectedCard, selectedCell):
     elif(cardType==Spell):
         return True
 
+def enemyPlaceCard(app):
+    #currently only deploys archers at constant time intervals
+    app.enemySelectedCard=app.battle.p2.cardObjects[0]
+    app.battle.p2.deployCard(app, app.enemySelectedCard, (8, 8), 0, app.enemyUnits, app.enemySelectedCard)
+
 #returns the format as (x, y) or (col, row)
 def battle_getCell(app, mouseX, mouseY):
     if(mouseX>480 or mouseY>650):
@@ -488,12 +542,14 @@ def battle_getCell(app, mouseX, mouseY):
         cellHeight=app.boardHeight/app.rows
         return math.floor(mouseX/cellWidth), math.floor(mouseY/cellHeight)
 
-
 def settings_onScreenActivate(app):
     pass
 
 def settings_redrawAll(app):
     drawImage('assets/bg.png', 0, 0)
+    drawLabel('Settings', 240, 40, fill='white', size=48, bold=True)
+    drawLabel('(press escape to return)', 240, 75, fill='white', size=12)
+
 
 def settings_onKeyPress(app, key):
     if(key=='escape'):
