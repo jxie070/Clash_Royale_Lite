@@ -22,9 +22,9 @@ class Player:
             app.card2bg=rgb(95, 66, 50)
             app.card3bg=rgb(95, 66, 50)
             app.card4bg=rgb(95, 66, 50)
-            print(app.battle.p1.cards)
-        else:
-            print('Not enough elixir!')
+            #print(app.battle.p1.cards)
+        #else:
+            #print('Not enough elixir!')
 
 
     

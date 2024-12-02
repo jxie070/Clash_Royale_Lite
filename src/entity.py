@@ -16,14 +16,17 @@ class Entity():
         return (currCol + app.dt*tilesPerSecond*dCol, currRow + app.dt*tilesPerSecond*dRow)
 
     def attackTarget(self, app, enemyUnit, enemyIndex, otherList):
+        #No need to pop, processUnits already pops units out
+        self.targeting=(enemyUnit, enemyIndex, otherList)
         currTime=time.time()
         if(currTime-self.lastAttackTime>=self.hitspeed):
             enemyUnit.health-=self.damage
             self.lastAttackTime=currTime
             if(enemyUnit.health<=0):
+                self.targeting=None
                 if(isinstance(enemyUnit, King)):
                     app.gameOver=True
-                otherList.pop(enemyIndex)
+                #print(otherList, enemyIndex)
 
     def findTarget(self, selfPosition, otherList):
         closestTarget=None
@@ -60,6 +63,7 @@ class Card(Entity):
         self.image=image
         self.sprite=sprite
         self.lastAttackTime=0
+        self.targeting=None
 
     def __repr__(self):
         return f'Card(name={self.name}, cost={self.cost})'

@@ -10,7 +10,6 @@ import math, copy, random, time
 #Any other uncited images are from in game screenshots from Supercell's game Clash Royale
 #This project is meant to mimic some of the core features of Clash Royale
 #TODO:
-#spell circle needs to go away after spell is casted
 #1. make A* work on air units, add the attribute targetting so tower doenst retarget to closest target if troop walks in front of another
 #2. make sure the targetting system works, no way to test currently (also fix pathing issue with range of giant/minipekka)
 #3. Imrpove UI, comment code (A*, timer, @classmethod), etc.
@@ -272,7 +271,7 @@ def battle_onStep(app):
             app.constant=3
         elif app.remainingTime==0:
             app.gameOver=True
-        elixirRate=1/2.8
+        elixirRate=1/1
         app.battle.p1.elixir=min(app.battle.p1.elixir+app.dt*elixirRate*app.constant, 10)
         app.battle.p2.elixir=min(app.battle.p2.elixir+app.dt*elixirRate*app.constant, 10)
         #enemy bot moves
@@ -282,46 +281,52 @@ def battle_onStep(app):
         processUnits(app,app.enemyUnits, app.friendlyUnits)
 
 def processUnits(app, friendlyUnits, enemyUnits):
-    for index, (friendlyUnit, friendlyPosition) in enumerate(friendlyUnits):
-            #if any friendly units have less than 0 health, delete them from the units list
-            if(not isinstance(friendlyUnit, Spell) and friendlyUnit.health<=0):
-                friendlyUnits.pop(index)
-                #if(len(friendlyUnits)==0 or len(enemyUnits)==0):
-                 #   app.gameOver=True  
+    clearUnits(friendlyUnits)
+    for friendlyIndex, (friendlyUnit, friendlyPosition) in enumerate(friendlyUnits):  
             if(isinstance(friendlyUnit, Tower)):
                 enemyTarget, enemyDistance, enemyPosition, enemyIndex = friendlyUnit.findTarget(friendlyPosition, enemyUnits)
                 if(enemyDistance<=friendlyUnit.hitrange):
                     friendlyUnit.attackTarget(app, enemyTarget, enemyIndex, enemyUnits)
             elif(isinstance(friendlyUnit, Troop)):
-                enemyTarget, enemyDistance, enemyPosition, enemyIndex = friendlyUnit.findTarget(friendlyPosition, enemyUnits)
-                print(f'enemyDistance: {enemyDistance}, enemyPosition: {enemyPosition}, friendlyPosition: {friendlyPosition}')
-                friendlyCol, friendlyRow = friendlyPosition
-                enemyCol, enemyRow = enemyPosition
-                path = getPath(app, (math.floor(friendlyCol), math.floor(friendlyRow)), (math.floor(enemyCol), math.floor(enemyRow)), friendlyUnit)
-                print(f'Path: {path}')
-                if(len(path)==1):
-                    friendlyUnit.attackTarget(app, enemyTarget, enemyIndex, enemyUnits)
+                if(friendlyUnit.targeting==None):
+                    enemyTarget, enemyDistance, enemyPosition, enemyIndex = friendlyUnit.findTarget(friendlyPosition, enemyUnits)
+                    #print(f'enemyDistance: {enemyDistance}, enemyPosition: {enemyPosition}, friendlyPosition: {friendlyPosition}')
+                    friendlyCol, friendlyRow = friendlyPosition
+                    enemyCol, enemyRow = enemyPosition
+                    path = getPath(app, (math.floor(friendlyCol), math.floor(friendlyRow)), (math.floor(enemyCol), math.floor(enemyRow)), friendlyUnit)
+                    #print(f'Path: {path}')
+                    if(len(path)==1):
+                        friendlyUnit.attackTarget(app, enemyTarget, enemyIndex, enemyUnits)
+                    else:
+                        nextRow, nextCol=path[1]
+                        newPosition=friendlyUnit.move(app, friendlyPosition, nextRow, nextCol)
+                        friendlyUnits[friendlyIndex]=(friendlyUnit, newPosition)
                 else:
-                    nextRow, nextCol=path[1]
-                    newPosition=friendlyUnit.move(app, friendlyPosition, nextRow, nextCol)
-                    friendlyUnits[index]=(friendlyUnit, newPosition)
+                    friendlyUnit.attackTarget(app, *friendlyUnit.targeting)
             elif(isinstance(friendlyUnit, Spell)):
                 radius=friendlyUnit.radius
-                for enemyUnit, enemyPosition in enemyUnits:
+                for enemyIndex, (enemyUnit, enemyPosition) in enumerate(enemyUnits):
+                    print(enemyIndex, enemyUnit, enemyPosition, friendlyUnit.getDistance(friendlyPosition, enemyPosition), radius)
                     if(friendlyUnit.getDistance(friendlyPosition, enemyPosition)<=radius):
+                        print('HERE')
                         if(isinstance(enemyUnit, Tower)):
                             enemyUnit.health-=friendlyUnit.towerDamage
                         else:
                             enemyUnit.health-=friendlyUnit.damage
                         if(enemyUnit.health<=0):
-                            enemyUnits.pop(index)
-                friendlyUnits.pop(index)
+                            enemyUnits.pop(enemyIndex)
+                friendlyUnits.pop(friendlyIndex)
             elif(isinstance(friendlyUnit, Building)):
                 friendlyUnit.health-=(app.dt/friendlyUnit.lifespan)*friendlyUnit.initialHealth
                 enemyTarget, enemyDistance, enemyPosition, enemyIndex = friendlyUnit.findTarget(friendlyPosition, enemyUnits)
                 if(enemyDistance<=friendlyUnit.hitrange):
                     friendlyUnit.attackTarget(app, enemyTarget, enemyIndex, enemyUnits)
-  
+
+def clearUnits(unitsList):
+    for index, (unit, position) in enumerate(unitsList):
+        if(not isinstance(unit, Spell) and unit.health<=0):
+            unitsList.pop(index)
+
 def getPath(app, start, end, unit):
     startCol, startRow = start
     endCol, endRow = end
@@ -341,7 +346,12 @@ def battle_redrawAll(app):
     for n in range(1, 10):
         drawLine(40+43*n, 755, 40+43*n, 795, lineWidth=2)
     drawImage('assets/elixir_icon.png', 0, 745, width=60, height=60)
-    drawLabel(math.floor(app.battle.p1.elixir), 30, 775, fill='white', size=24, bold=True)
+    #letting user know if elixir is full
+    if(app.battle.p1.elixir==10):
+        drawLabel('Elixir is full!', 240, 775, fill='red', size=24, bold=True)
+        drawLabel(math.floor(app.battle.p1.elixir), 30, 775, fill='red', size=24, bold=True)
+    else:
+        drawLabel(math.floor(app.battle.p1.elixir), 30, 775, fill='white', size=24, bold=True)
     #drawing the empty card slots that will be set to cards
     drawRect(90, 660, 75, 90, fill=app.card1bg)
     drawRect(175, 660, 75, 90, fill=app.card2bg)
@@ -387,7 +397,6 @@ def battle_redrawAll(app):
     drawTimer(app)  
     #drawing spell range if selected card is Spell
     drawSpellBorders(app)
-
 
 def drawSpellBorders(app):
     if(isinstance(app.friendlySelectedCard, Spell) and app.friendlySelectedCell!=None):
