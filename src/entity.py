@@ -98,7 +98,7 @@ class Troop(Card):
         self.targetted=targetted
 
     def __repr__(self):
-        return f'Troop(name={self.name}, cost={self.cost}, health={self.health}, damage={self.damage}, hitspeed={self.hitspeed}, hitrange={self.hitrange}, targets={self.targets}, speed={self.speed})'
+        return f'Troop(name={self.name})'
 
 class Spell(Card):
     def __init__(self, name, cost, image, sprite, damage, towerDamage, radius):
@@ -108,7 +108,7 @@ class Spell(Card):
         self.radius=radius
 
     def __repr__(self):
-        return f'Spell(name={self.name}, cost={self.cost}, damage={self.damage}, towerDamage={self.towerDamage}, radius={self.radius})'
+        return f'Spell(name={self.name})'
     
 class Building(Card):
     def __init__(self, name, cost, image, sprite, health, damage, hitspeed, hitrange, targets, targetted, lifespan, initialHealth):
@@ -123,7 +123,7 @@ class Building(Card):
         self.initialHealth=initialHealth
 
     def __repr__(self):
-        return f'Building(name={self.name}, cost={self.cost}, health={self.health}, damage={self.damage}, hitspeed={self.hitspeed}, hitrange={self.hitrange}, targets={self.targets}, lifespan={self.lifespan}, initialHealth={self.initialHealth})'
+        return f'Building(name={self.name})'
     
 class Tower(Entity):
     towerLibrary={}
@@ -138,7 +138,7 @@ class Tower(Entity):
         self.lastAttackTime=0
 
     def __repr__(self):
-        return f'Tower(health={self.health}, damage={self.damage}, hitrange={self.hitrange}, hitspeed={self.hitspeed})'
+        return f'Tower(health={self.health})'
     
     def clone(self):
         return copy.deepcopy(self)
@@ -146,21 +146,28 @@ class Tower(Entity):
     @classmethod
     def createTowerLibrary(cls):
         cls.towerLibrary={
-            'PrincessLeft': Princess(3052, 109, 7.5, 0.8, ['air', 'ground', 'buildings'], ['air', 'ground', 'buildings'], None),
-            'PrincessRight': Princess(3052, 109, 7.5, 0.8, ['air', 'ground', 'buildings'], ['air', 'ground', 'buildings'], None),
+            'PrincessLeft': PrincessLeft(3052, 109, 7.5, 0.8, ['air', 'ground', 'buildings'], ['air', 'ground', 'buildings'], None),
+            'PrincessRight': PrincessRight(3052, 109, 7.5, 0.8, ['air', 'ground', 'buildings'], ['air', 'ground', 'buildings'], None),
             'King': King(4824, 109, 7, 1, ['air', 'ground', 'buildings'], ['air', 'ground', 'buildings'], None)
         }
 
-class Princess(Tower):
+class PrincessLeft(Tower):
     def __init__(self, health, damage, hitrange, hitspeed, targets, targetted, image):
         super().__init__(health, damage, hitrange, hitspeed, targets, targetted, image)
 
     def __repr__(self):
-        return f'Princess(health={self.health}, damage={self.damage}, hitrange={self.hitrange}, hitspeed={self.hitspeed})'
+        return f'Princess(health={self.health})'
+
+class PrincessRight(Tower):
+    def __init__(self, health, damage, hitrange, hitspeed, targets, targetted, image):
+        super().__init__(health, damage, hitrange, hitspeed, targets, targetted, image)
+
+    def __repr__(self):
+        return f'Princess(health={self.health})'
 
 class King(Tower):
     def __init__(self, health, damage, hitrange, hitspeed, targets, targetted, image):
         super().__init__(health, damage, hitrange, hitspeed, targets, targetted, image)
 
     def __repr__(self):
-        return f'King(health={self.health}, damage={self.damage}, hitrange={self.hitrange}, hitspeed={self.hitspeed})'
+        return f'King(health={self.health})'

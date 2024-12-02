@@ -1,6 +1,6 @@
 from cmu_graphics import *
 from game import Game
-from entity import Card, Building, Troop, Spell, Tower, Princess, King
+from entity import Card, Building, Troop, Spell, Tower, PrincessLeft, PrincessRight, King
 from node import Node, astar
 import math, copy, random, time
 
@@ -304,23 +304,34 @@ def processUnits(app, friendlyUnits, enemyUnits):
                 else:
                     friendlyUnit.attackTarget(app, *friendlyUnit.targeting)
             elif(isinstance(friendlyUnit, Spell)):
+                #List of all indices that need to be popped
+                poppingIndices=[]
                 radius=friendlyUnit.radius
                 for enemyIndex, (enemyUnit, enemyPosition) in enumerate(enemyUnits):
-                    print(enemyIndex, enemyUnit, enemyPosition, friendlyUnit.getDistance(friendlyPosition, enemyPosition), radius)
                     if(friendlyUnit.getDistance(friendlyPosition, enemyPosition)<=radius):
-                        print('HERE')
+                        #print('HERE')
                         if(isinstance(enemyUnit, Tower)):
                             enemyUnit.health-=friendlyUnit.towerDamage
                         else:
                             enemyUnit.health-=friendlyUnit.damage
                         if(enemyUnit.health<=0):
-                            enemyUnits.pop(enemyIndex)
+                            poppingIndices.append(enemyIndex)
+                enemyUnits=popFromIndices(enemyUnits, poppingIndices)
                 friendlyUnits.pop(friendlyIndex)
+
             elif(isinstance(friendlyUnit, Building)):
                 friendlyUnit.health-=(app.dt/friendlyUnit.lifespan)*friendlyUnit.initialHealth
                 enemyTarget, enemyDistance, enemyPosition, enemyIndex = friendlyUnit.findTarget(friendlyPosition, enemyUnits)
                 if(enemyDistance<=friendlyUnit.hitrange):
                     friendlyUnit.attackTarget(app, enemyTarget, enemyIndex, enemyUnits)
+
+def popFromIndices(L, indices):
+    #where L is the original list and indices contains the indices to be popped
+    L=copy.deepcopy(L)
+    indices = sorted(indices, reverse=True)
+    for index in indices:
+        L.pop(index)
+    return L
 
 def clearUnits(unitsList):
     for index, (unit, position) in enumerate(unitsList):
@@ -348,10 +359,8 @@ def battle_redrawAll(app):
     drawImage('assets/elixir_icon.png', 0, 745, width=60, height=60)
     #letting user know if elixir is full
     if(app.battle.p1.elixir==10):
-        drawLabel('Elixir is full!', 240, 775, fill='red', size=24, bold=True)
-        drawLabel(math.floor(app.battle.p1.elixir), 30, 775, fill='red', size=24, bold=True)
-    else:
-        drawLabel(math.floor(app.battle.p1.elixir), 30, 775, fill='white', size=24, bold=True)
+        drawLabel('Elixir is full!', 240, 775, fill='red', size=24, bold=True)    
+    drawLabel(math.floor(app.battle.p1.elixir), 30, 775, fill='white', size=24, bold=True)
     #drawing the empty card slots that will be set to cards
     drawRect(90, 660, 75, 90, fill=app.card1bg)
     drawRect(175, 660, 75, 90, fill=app.card2bg)
