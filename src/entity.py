@@ -136,6 +136,7 @@ class Tower(Entity):
         self.targetted=targetted
         self.image=None
         self.lastAttackTime=0
+        self.targeting=None
 
     def __repr__(self):
         return f'Tower(health={self.health})'
@@ -148,7 +149,7 @@ class Tower(Entity):
         cls.towerLibrary={
             'PrincessLeft': PrincessLeft(3052, 109, 7.5, 0.8, ['air', 'ground', 'buildings'], ['air', 'ground', 'buildings'], None),
             'PrincessRight': PrincessRight(3052, 109, 7.5, 0.8, ['air', 'ground', 'buildings'], ['air', 'ground', 'buildings'], None),
-            'King': King(4824, 109, 7, 1, ['air', 'ground', 'buildings'], ['air', 'ground', 'buildings'], None)
+            'King': King(4824, 109, 7, 1, ['air', 'ground', 'buildings'], ['air', 'ground', 'buildings'], False, None)
         }
 
 class PrincessLeft(Tower):
@@ -166,8 +167,8 @@ class PrincessRight(Tower):
         return f'Princess(health={self.health})'
 
 class King(Tower):
-    def __init__(self, health, damage, hitrange, hitspeed, targets, targetted, image):
+    def __init__(self, health, damage, hitrange, hitspeed, targets, targetted, active, image):
         super().__init__(health, damage, hitrange, hitspeed, targets, targetted, image)
-
+        self.active=active
     def __repr__(self):
         return f'King(health={self.health})'

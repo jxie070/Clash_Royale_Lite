@@ -24,12 +24,16 @@ class Game:
         board[15][14]=2
         board[16][14]=2
         #3 = princess tower tiles
+            #red
         self.setSquare(board, 4, 7, 2, 5, 3)
         self.setSquare(board, 4, 7, 13, 16, 3)
+            #blue
         self.setSquare(board, 25, 28, 2, 5, 3)
         self.setSquare(board, 25, 28, 13, 16, 3)
         #4 = king tower tiles
+            #red
         self.setSquare(board, 0, 4, 7, 11, 4)
+            #blue
         self.setSquare(board, 28, 32, 7, 11, 4)
         return board
     

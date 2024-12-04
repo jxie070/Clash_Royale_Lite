@@ -13,11 +13,9 @@ import math, copy, random, time
 #1. make A* work on air units, add the attribute targetting so tower doenst retarget to closest target if troop walks in front of another
 #2. make sure the targetting system works, no way to test currently (also fix pathing issue with range of giant/minipekka)
 #3. Imrpove UI, comment code (A*, timer, @classmethod), etc.
-#4. Making buildings attack (like cannons)
 #5. get the font to work
 #6. Fix bug with destroying king tower, also when both towers destroyed, pathing is weird
-#6. Once tower is destroyed, remove the black tiles to allow pathing to continue
-#7. fireballs dont work on archers?
+#7. make valid position work
 def onAppStart(app):
     app.stepsPerSecond=1000
     app.width=480
@@ -271,22 +269,48 @@ def battle_onStep(app):
             app.constant=3
         elif app.remainingTime==0:
             app.gameOver=True
-        elixirRate=1/1
+        elixirRate=1/2.8
         app.battle.p1.elixir=min(app.battle.p1.elixir+app.dt*elixirRate*app.constant, 10)
         app.battle.p2.elixir=min(app.battle.p2.elixir+app.dt*elixirRate*app.constant, 10)
         #enemy bot moves
-        enemyPlaceCard(app)
+        #enemyPlaceCard(app)
+        #checking towers and adjusting removing unwalkable black/red squares
+        updateBoard(app)
         #making units move/attack
         processUnits(app, app.friendlyUnits, app.enemyUnits)
         processUnits(app,app.enemyUnits, app.friendlyUnits)
 
+def updateBoard(app):
+    rowColIndices=[(25, 28, 2, 5), (25, 28, 13, 16), (28, 32, 7, 11), (4, 7, 2, 5), (4, 7, 13, 16), (0, 4, 7, 11)]
+    friendlyLeft, friendlyRight, friendlyKing = checkTowers(app.friendlyUnits)
+    enemyLeft, enemyRight, enemyKing = checkTowers(app.enemyUnits)
+    #if tower is destroyed, remove the black/red squares
+    for index, status in enumerate((friendlyLeft, friendlyRight, friendlyKing, enemyLeft, enemyRight, enemyKing)):
+        if(status==None):
+            staticSetSquare(app.board, *rowColIndices[index], 0)
+
+def staticSetSquare(board, sRow, eRow, sCol, eCol, n):
+        for row in range(sRow, eRow):
+            for col in range(sCol, eCol):
+                board[row][col]=n
+
 def processUnits(app, friendlyUnits, enemyUnits):
     clearUnits(friendlyUnits)
-    for friendlyIndex, (friendlyUnit, friendlyPosition) in enumerate(friendlyUnits):  
+    for friendlyIndex, (friendlyUnit, friendlyPosition) in enumerate(friendlyUnits):
             if(isinstance(friendlyUnit, Tower)):
-                enemyTarget, enemyDistance, enemyPosition, enemyIndex = friendlyUnit.findTarget(friendlyPosition, enemyUnits)
-                if(enemyDistance<=friendlyUnit.hitrange):
-                    friendlyUnit.attackTarget(app, enemyTarget, enemyIndex, enemyUnits)
+                #for King towers, check if any princesses are destroyed or if health isnt full
+                #if king not active, just skip dont do anything
+                if(isinstance(friendlyUnit, King)):
+                    if(None in checkTowers(friendlyUnits) or friendlyUnit.health!=4824):
+                        friendlyUnit.active=True
+                    if(not friendlyUnit.active):
+                        continue
+                if(friendlyUnit.targeting==None):
+                    enemyTarget, enemyDistance, enemyPosition, enemyIndex = friendlyUnit.findTarget(friendlyPosition, enemyUnits)
+                    if(enemyDistance<=friendlyUnit.hitrange):
+                        friendlyUnit.attackTarget(app, enemyTarget, enemyIndex, enemyUnits)
+                else:
+                    friendlyUnit.attackTarget(app, *friendlyUnit.targeting)
             elif(isinstance(friendlyUnit, Troop)):
                 if(friendlyUnit.targeting==None):
                     enemyTarget, enemyDistance, enemyPosition, enemyIndex = friendlyUnit.findTarget(friendlyPosition, enemyUnits)
@@ -318,12 +342,14 @@ def processUnits(app, friendlyUnits, enemyUnits):
                             poppingIndices.append(enemyIndex)
                 enemyUnits=popFromIndices(enemyUnits, poppingIndices)
                 friendlyUnits.pop(friendlyIndex)
-
             elif(isinstance(friendlyUnit, Building)):
-                friendlyUnit.health-=(app.dt/friendlyUnit.lifespan)*friendlyUnit.initialHealth
-                enemyTarget, enemyDistance, enemyPosition, enemyIndex = friendlyUnit.findTarget(friendlyPosition, enemyUnits)
-                if(enemyDistance<=friendlyUnit.hitrange):
-                    friendlyUnit.attackTarget(app, enemyTarget, enemyIndex, enemyUnits)
+                if(friendlyUnit.targeting==None):
+                    friendlyUnit.health-=(app.dt/friendlyUnit.lifespan)*friendlyUnit.initialHealth
+                    enemyTarget, enemyDistance, enemyPosition, enemyIndex = friendlyUnit.findTarget(friendlyPosition, enemyUnits)
+                    if(enemyDistance<=friendlyUnit.hitrange):
+                        friendlyUnit.attackTarget(app, enemyTarget, enemyIndex, enemyUnits)
+                else:
+                    friendlyUnit.attackTarget(app, *friendlyUnit.targeting)
 
 def popFromIndices(L, indices):
     #where L is the original list and indices contains the indices to be popped
@@ -385,15 +411,21 @@ def battle_redrawAll(app):
             else:
                 drawCell(app, row, col)
     #drawing the red towers
-    #for units in app.friendlyUnits: if unit==Princess Left draw __
-    #if princess left in app.units draw, put rubble underneath so if u dont draw it, it shows rubble
-    drawImage('assets/red_princess_tower.png', 53, 80, width=80, height=70)
-    drawImage('assets/red_princess_tower.png', 347, 80, width=80, height=70)
-    drawImage('assets/red_king_tower.png', 187, 0, width=106, height=81)
+    enemyLeft, enemyRight, enemyKing = checkTowers(app.enemyUnits)
+    if(enemyLeft):
+        drawImage('assets/red_princess_tower.png', 53, 80, width=80, height=70)
+    if(enemyRight):
+        drawImage('assets/red_princess_tower.png', 347, 80, width=80, height=70)
+    if(enemyKing):
+        drawImage('assets/red_king_tower.png', 187, 0, width=106, height=81)
     #drawing the blue towers
-    drawImage('assets/red_princess_tower.png', 53, 508, width=80, height=70)
-    drawImage('assets/red_princess_tower.png', 347, 508, width=80, height=70)
-    drawImage('assets/blue_king_tower.png', 187, 569, width=106, height=81)
+    friendlyLeft, friendlyRight, friendlyKing = checkTowers(app.friendlyUnits)
+    if(friendlyLeft):
+        drawImage('assets/red_princess_tower.png', 53, 508, width=80, height=70)
+    if(friendlyRight):
+        drawImage('assets/red_princess_tower.png', 347, 508, width=80, height=70)
+    if(friendlyKing):
+        drawImage('assets/blue_king_tower.png', 187, 569, width=106, height=81)
     #drawing the units/buildings in friendlyUnits
     for friendlyUnit, friendlyPosition in app.friendlyUnits:
         if(isinstance(friendlyUnit, (Troop, Building, Tower))):
@@ -406,6 +438,17 @@ def battle_redrawAll(app):
     drawTimer(app)  
     #drawing spell range if selected card is Spell
     drawSpellBorders(app)
+
+def checkTowers(friendlyList):
+    left, right, king = None, None, None
+    for unit, position in friendlyList:
+        if isinstance(unit, PrincessLeft):
+            left=True
+        elif(isinstance(unit, PrincessRight)):
+            right=True
+        elif(isinstance(unit, King)):
+            king=True
+    return left, right, king
 
 def drawSpellBorders(app):
     if(isinstance(app.friendlySelectedCard, Spell) and app.friendlySelectedCell!=None):
@@ -528,7 +571,7 @@ def battle_onMousePress(app, mouseX, mouseY):
         selectedIndex=app.battle.p1.cards.index(app.friendlySelectedCard.name)
         if(selectedCell!=None):
             print(selectedCell, app.friendlySelectedCard.name)
-            if(validPosition(app, app.friendlySelectedCard, selectedCell)):
+            if(validPosition(app, app.friendlySelectedCard, selectedCell, 'friendly')):
                 #print('Valid Position!')
                 app.battle.p1.deployCard(app, app.friendlySelectedCard, selectedCell, selectedIndex, app.friendlyUnits, app.friendlySelectedCard)
                 app.friendlySelectedCard=None
@@ -536,15 +579,17 @@ def battle_onMousePress(app, mouseX, mouseY):
             else:
                 print('Invalid Position!')
             
-def validPosition(app, selectedCard, selectedCell):
+def validPosition(app, selectedCard, selectedCell, side):
     cardType = type(selectedCard)
     selectedCol, selectedRow = selectedCell
-    if(cardType==Troop):
-        return selectedRow>15 and app.board[selectedRow][selectedCol]==0
-    elif(cardType==Building):
-        return selectedRow>15 and app.board[selectedRow][selectedCol]==0
-    elif(cardType==Spell):
-        return True
+    if(side=='friendly'):
+        if(cardType==Troop):
+            return selectedRow>15 and app.board[selectedRow][selectedCol]==0
+        elif(cardType==Building):
+            return selectedRow>15 and app.board[selectedRow][selectedCol]==0
+        elif(cardType==Spell):
+            return True
+    #elif side='enemy':
 
 def enemyPlaceCard(app):
     #currently only deploys archers at constant time intervals
