@@ -2,6 +2,7 @@ from cmu_graphics import *
 from game import Game
 from entity import Card, Building, Troop, Spell, Tower, PrincessLeft, PrincessRight, King
 from node import Node, astar
+from player import Player
 import math, copy, random, time
 
 #Jack Xie, jackx2
@@ -13,9 +14,11 @@ import math, copy, random, time
 #1. make A* work on air units, add the attribute targetting so tower doenst retarget to closest target if troop walks in front of another
 #2. make sure the targetting system works, no way to test currently (also fix pathing issue with range of giant/minipekka)
 #3. Imrpove UI, comment code (A*, timer, @classmethod), etc.
-#5. get the font to work
-#6. Fix bug with destroying king tower, also when both towers destroyed, pathing is weird
-#7. make valid position work
+#4. MAKE AI FUNCTION THAT DEPLOOYS ENEMY UNITS
+#4. Fix bug with destroying king tower, also when both towers destroyed, pathing is weird
+#5. test valid position when deploying enemy units
+#6. make the cards screen able to see the stats of each card
+
 def onAppStart(app):
     app.stepsPerSecond=1000
     app.width=480
@@ -26,7 +29,7 @@ def onAppStart(app):
     app.username='User'
     app.botDeck=['Archers', 'Archers', 'Archers', 'Archers', 'Archers', 'Archers', 'Archers', 'Archers']
     app.deck=['Archers', 'Knight', 'Giant', 'Fireball', 'Arrows', 'Cannon', 'Mini-Pekka', 'Musketeer']
-    app.font='supercell_magic.ttf'
+    app.font='supercell-magic'
 
 def main_redrawAll(app):
     #on main start is on app start
@@ -34,17 +37,17 @@ def main_redrawAll(app):
     drawImage('assets/bg.png', 0, 0)
     #gui
     drawImage('assets/battle_button.png', 115, 400, width=250, height=250)
-    drawLabel('Battle', 240, 525, fill='white', size=48, bold=True, border='black', borderWidth=2)
-    drawImage('assets/arena1.png', 65, 150, width=350, height=300)
+    drawLabel('Battle', 240, 525, fill='white', size=32, bold=True, border='black', font=app.font, borderWidth=2)
+    drawImage('assets/arena.png', 65, 150, width=350, height=340)
     drawRect(0, 8, 480, 52, fill=rgb(4, 21, 45), opacity=75)
     drawImage('assets/gem_icon.png', 420, 10, width=50, height=50)
-    drawLabel(app.gems, 420, 35, size=32, bold=True, fill='white', align='right')
+    drawLabel(app.gems, 420, 35, size=24, font=app.font, bold=True, fill='white', align='right')
     drawImage('assets/gold_icon.png', 280, 10, width=50, height=50)
-    drawLabel(app.gold, 275, 35, size=32, bold=True, fill='white', align='right')
+    drawLabel(app.gold, 275, 35, size=24, font=app.font, bold=True, fill='white', align='right')
     drawImage('assets/experience_icon.png', 10, 12, width=40, height=40)
-    drawLabel(app.experience, 60, 35, size=32, bold=True, fill='white', align='left')
+    drawLabel(app.experience, 60, 35, size=24, font=app.font, bold=True, fill='white', align='left')
     drawImage('assets/settings_icon.png', 15, 250, width=75, height=75)
-    drawLabel(f'Welcome, {app.username}!', 240, 120, size=48, fill='white', bold=True)
+    drawLabel(f'Welcome, {app.username}!', 240, 120, size=32, font=app.font, fill='white', bold=True)
     #chest slots
     drawImage('assets/chest_slot.png', 0, 580, width=120, height=150)
     drawImage('assets/chest_slot.png', 120, 580, width=120, height=150)
@@ -55,15 +58,15 @@ def main_redrawAll(app):
     drawRect(0, 735, 480, 5, fill=rgb(111, 137, 167))
     #cards icon
     drawImage('assets/card_icon.png', 80, 740, width=55, height=55)
-    drawLabel('Cards>', 107.5, 790, fill='white', size=17, bold=True)
+    drawLabel('Cards>', 107.5, 790, font=app.font, fill='white', size=17, bold=True)
     #shop icon
     drawImage('assets/shop_icon.png', 347.5, 740, width=55, height=55)
-    drawLabel('<FAQ', 375, 790, fill='white', size=17, bold=True)
+    drawLabel('<FAQ', 375, 790, font=app.font, fill='white', size=17, bold=True)
     #glow to indicate which screen
     drawRect(180, 740, 120, 60, fill=rgb(114, 145, 176), opacity=30)
     #battle icon
     drawImage('assets/battle_icon.png', 212.5, 740, width=55, height=55)
-    drawLabel('<Battle>', 240, 790, fill='white', size=17, bold=True)   
+    drawLabel('<Battle>', 240, 790, font=app.font, fill='white', size=20, bold=True)   
 
 #when on main screen, pressing left should go to cards; pressing right should go to shop
 def main_onKeyPress(app, key):
@@ -118,22 +121,29 @@ def cards_onScreenActivate(app):
     pass
 
 def cards_redrawAll(app):
+    drawImage('assets/bg.png', 0, 0)
     drawLabel('Cards Screen', 100, 100)
     #bottom bar
     drawRect(0, 740, 480, 60, fill=rgb(67, 81, 98))
     drawRect(0, 735, 480, 5, fill=rgb(111, 137, 167))
     #battle icon
     drawImage('assets/battle_icon.png', 212.5, 740, width=55, height=55)
-    drawLabel('<Battle>', 240, 790, fill='white', size=17, bold=True)
+    drawLabel('<Battle>', 240, 790, font=app.font, fill='white', size=17, bold=True)
     #cards icon
     drawImage('assets/card_icon.png', 80, 740, width=55, height=55)
     #shop icon
     drawImage('assets/shop_icon.png', 347.5, 740, width=55, height=55)
-    drawLabel('<Shop', 375, 790, fill='white', size=17, bold=True)
+    drawLabel('<FAQ', 375, 790, font=app.font, fill='white', size=17, bold=True)
     #glow to indicate which screen
     drawRect(0, 740, 180, 60, fill=rgb(114, 145, 176), opacity=30)
-    drawLabel('Cards>', 107.5, 790, fill='white', size=17, bold=True)
-
+    drawLabel('Cards>', 107.5, 790, font=app.font, fill='white', size=20, bold=True)
+    #wooden background
+    drawImage('assets/woodbg.png', 0, 0, width=480, height=400)
+    for i in range(4):
+        drawRect(70 + 90*i, 10, 70, 90, fill=rgb(95, 66, 50))
+    for j in range(4, 8):
+        drawRect(70+(j-4)*90, 120, 70, 90, fill=rgb(95, 66, 50))
+     
 def cards_onKeyPress(app, key):
     if(key=='right'):
         setActiveScreen('main')
@@ -157,21 +167,43 @@ def shop_onScreenActivate(app):
     pass
 
 def shop_redrawAll(app):
-    drawLabel('Shop Screen', 240, 200, size=48, fill='black')
+    drawImage('assets/bg.png', 0, 0)
+    drawLabel('How to Play:', 240, 100, size=48, font=app.font, fill='white', borderWidth=2, border='black')
+    drawLabel('Navigation', 10, 150, size=24, font=app.font, fill='white', align='left')
+    drawLabel('-Use the arrow keys or click to switch screens', 10, 180, size=12, font=app.font, fill='white', align='left')
+    drawLabel('-Click on buttons and icons to press them', 10, 200, size=12, font=app.font, fill='white', align='left')
+    drawLabel('Battle', 10, 240, size=24, font=app.font, fill='white', align='left')
+    drawLabel('-Your deck is at the bottom of your hand', 10, 270, size=12, font=app.font, fill='white', align='left')
+    drawLabel('-Your deck contains 8 cards, but only 4 are in your', 10, 290, size=12, font=app.font, fill='white', align='left')
+    drawLabel('  hand at any given moment', 10, 310, size=12, font=app.font, fill='white', align='left')
+    drawLabel('-Each card has an elixir cost, and you can only deploy', 10, 330, size=12, font=app.font, fill='white', align='left')
+    drawLabel('  cards if you have enough elixir', 10, 350, size=12, font=app.font, fill='white', align='left')
+    drawLabel('-Select a card using the number keys 1-4 or by clicking', 10, 370, size=12, font=app.font, fill='white', align='left')
+    drawLabel('-Once selected, the red area represents deployable', 10, 390, size=12, font=app.font, fill='white', align='left')
+    drawLabel('  squares; click the space to deploy the card', 10, 410, size=12, font=app.font, fill='white', align='left')
+    drawLabel('-The objective of the game is to destroy the enemy', 10, 430, size=12, font=app.font, fill='white', align='left')
+    drawLabel('  towers while defending your own', 10, 450, size=12, font=app.font, fill='white', align='left')
+    drawLabel('-Double elixir occurs after 2 minutes, and triple elixir', 10, 470, size=12, font=app.font, fill='white', align='left')
+    drawLabel('  starts after 3 minutes. After 6 minutes, the player', 10, 490, size=12, font=app.font, fill='white', align='left')
+    drawLabel('  with more towers left standing wins. If the players', 10, 510, size=12, font=app.font, fill='white', align='left')
+    drawLabel('  have the same # of towers, the game ends in a draw.', 10, 530, size=12, font=app.font, fill='white', align='left')
+    drawImage('assets/logo.png', 50, 450, width=380, height=400)
+    drawImage('assets/yawning_princess.png', 10, 530, width=120, height=120)
+    drawImage('assets/laughing_king.png', 350, 630, width=150, height=110)
     #bottom bar
     drawRect(0, 740, 480, 60, fill=rgb(67, 81, 98))
     drawRect(0, 735, 480, 5, fill=rgb(111, 137, 167))
     #battle icon
     drawImage('assets/battle_icon.png', 212.5, 740, width=55, height=55)
-    drawLabel('<Battle>', 240, 790, fill='white', size=17, bold=True)
+    drawLabel('<Battle>', 240, 790, font=app.font, fill='white', size=17, bold=True)
     #cards icon
     drawImage('assets/card_icon.png', 80, 740, width=55, height=55)
-    drawLabel('Cards>', 107.5, 790, fill='white', size=17, bold=True)
+    drawLabel('Cards>', 107.5, 790, font=app.font, fill='white', size=17, bold=True)
     #shop icon
     drawImage('assets/shop_icon.png', 347.5, 740, width=55, height=55)
     #glow to indicate which screen
     drawRect(300, 740, 180, 60, fill=rgb(114, 145, 176), opacity=30)
-    drawLabel('<Shop', 375, 790, fill='white', size=17, bold=True)
+    drawLabel('<FAQ', 375, 790, font=app.font, fill='white', size=20, bold=True)
 
 def shop_onKeyPress(app, key):
     if(key=='left'):
@@ -388,8 +420,8 @@ def battle_redrawAll(app):
     drawImage('assets/elixir_icon.png', 0, 745, width=60, height=60)
     #letting user know if elixir is full
     if(app.battle.p1.elixir==10):
-        drawLabel('Elixir is full!', 240, 775, fill='red', size=24, bold=True)    
-    drawLabel(math.floor(app.battle.p1.elixir), 30, 775, fill='white', size=24, bold=True)
+        drawLabel('Elixir is full!', 240, 775, font=app.font, fill='red', size=24, bold=True, border='black')    
+    drawLabel(math.floor(app.battle.p1.elixir), 30, 775, font=app.font, fill='white', size=24, bold=True)
     #drawing the empty card slots that will be set to cards
     drawRect(90, 660, 75, 90, fill=app.card1bg)
     drawRect(175, 660, 75, 90, fill=app.card2bg)
@@ -405,14 +437,14 @@ def battle_redrawAll(app):
     drawImage('assets/elixir_icon.png', 200, 730, width=25, height=25)
     drawImage('assets/elixir_icon.png', 285, 730, width=25, height=25)
     drawImage('assets/elixir_icon.png', 370, 730, width=25, height=25)
-    drawLabel(app.battle.p1.cardObjects[0].cost, 127.5, 742.5, fill='white', bold=True)
-    drawLabel(app.battle.p1.cardObjects[1].cost, 212.5, 742.5, fill='white', bold=True)
-    drawLabel(app.battle.p1.cardObjects[2].cost, 297.5, 742.5, fill='white', bold=True)
-    drawLabel(app.battle.p1.cardObjects[3].cost, 382.5, 742.5, fill='white', bold=True)
+    drawLabel(app.battle.p1.cardObjects[0].cost, 127.5, 742.5, font=app.font, fill='white', bold=True)
+    drawLabel(app.battle.p1.cardObjects[1].cost, 212.5, 742.5, font=app.font, fill='white', bold=True)
+    drawLabel(app.battle.p1.cardObjects[2].cost, 297.5, 742.5, font=app.font, fill='white', bold=True)
+    drawLabel(app.battle.p1.cardObjects[3].cost, 382.5, 742.5, font=app.font, fill='white', bold=True)
     #drawing the next card
-    drawRect(5, 705, 35, 45, fill=rgb(95, 66, 50))
+    drawRect(10, 705, 35, 45, fill=rgb(95, 66, 50))
     drawImage(app.battle.p1.cardObjects[4].image, 5, 705, width=35, height=45)
-    drawLabel('Next:', 20, 700, fill='white', size=16, bold=True)
+    drawLabel('Next:', 27.5, 695, fill='white', font=app.font, size=12, bold=True)
     #creating the board
     for row in range(app.rows):
         for col in range(app.cols):
@@ -488,7 +520,7 @@ def drawUnit(app, unit, position):
     adjustedX, adjustedY = cellToPixel(app, row, col)
     if(isinstance(unit, (Troop, Building))):
         drawImage(unit.sprite, adjustedX, adjustedY, align='center')
-    drawLabel(rounded(unit.health), adjustedX, adjustedY, size=18, fill='white', bold=True)
+    drawLabel(rounded(unit.health), adjustedX, adjustedY, size=14, font=app.font, fill='white')
 
 def rounded(n):
     return math.floor(n+0.5) if n>0 else math.floor(n-0.5)
@@ -500,7 +532,7 @@ def drawTimer(app):
     secondsString=f'0{seconds}' if(seconds<10) else str(seconds)
     minutesString=f'0{minutes}' if(minutes<10) else str(minutes)
     time = f'{minutesString}:{secondsString}'
-    drawLabel(time, 440, 20, fill='white', size=24, bold=True)
+    drawLabel(time, 440, 20, fill='white', font=app.font, size=18, bold=True, border='black', borderWidth=2)
 
 def drawCell(app, row, col):
     colorList=['green', 'blue', 'brown', 'black', 'red']
