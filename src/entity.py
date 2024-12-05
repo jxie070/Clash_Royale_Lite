@@ -148,9 +148,9 @@ class Tower(Entity):
     def createTowerLibrary(cls):
         #king:4824, tower:3052
         cls.towerLibrary={
-            'PrincessLeft': PrincessLeft(3052, 109, 7.5, 0.8, ['air', 'ground', 'buildings'], ['air', 'ground', 'buildings'], None),
-            'PrincessRight': PrincessRight(3052, 109, 7.5, 0.8, ['air', 'ground', 'buildings'], ['air', 'ground', 'buildings'], None),
-            'King': King(4824, 109, 7, 1, ['air', 'ground', 'buildings'], ['air', 'ground', 'buildings'], False, None)
+            'PrincessLeft': PrincessLeft(3052, 109, 9.5, 0.8, ['air', 'ground', 'buildings'], ['air', 'ground', 'buildings'], None),
+            'PrincessRight': PrincessRight(3052, 109, 9.5, 0.8, ['air', 'ground', 'buildings'], ['air', 'ground', 'buildings'], None),
+            'King': King(4824, 109, 8, 1, ['air', 'ground', 'buildings'], ['air', 'ground', 'buildings'], False, None)
         }
 
 class PrincessLeft(Tower):

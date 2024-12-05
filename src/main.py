@@ -30,7 +30,9 @@ def onAppStart(app):
     app.botDeck=['Archers', 'Archers', 'Archers', 'Archers', 'Archers', 'Archers', 'Archers', 'Archers']
     app.deck=['Archers', 'Knight', 'Giant', 'Fireball', 'Arrows', 'Cannon', 'Mini-Pekka', 'Musketeer']
     app.font='supercell-magic'
-
+    #create the card library
+    Card.createCardLibrary()
+    Tower.createTowerLibrary()
 def main_redrawAll(app):
     #on main start is on app start
     #background
@@ -118,7 +120,8 @@ def main_findButton(app, mouseX, mouseY):
     return None
 
 def cards_onScreenActivate(app):
-    pass
+    app.player = Player(app.username, app.deck)
+    app.player.cardObjects = [Card.cardLibrary[card] for card in app.player.cards]
 
 def cards_redrawAll(app):
     drawImage('assets/bg.png', 0, 0)
@@ -139,11 +142,20 @@ def cards_redrawAll(app):
     drawLabel('Cards>', 107.5, 790, font=app.font, fill='white', size=20, bold=True)
     #wooden background
     drawImage('assets/woodbg.png', 0, 0, width=480, height=400)
+    #drawing in the cards and the elixir costs
+    cardSpace=90
+    leftSpace=70
+    elixirSpace=20
     for i in range(4):
-        drawRect(70 + 90*i, 10, 70, 90, fill=rgb(95, 66, 50))
+        drawRect(leftSpace+cardSpace*i, 20, 70, 90, fill=rgb(95, 66, 50))
+        drawImage(app.player.cardObjects[i].image, leftSpace+cardSpace*i, 20, width=70, height=90)
+        drawImage('assets/elixir_icon.png', leftSpace+cardSpace*i-elixirSpace, 10, width=40, height=40)
+        drawLabel(app.player.cardObjects[i].cost, leftSpace+cardSpace*i, 30, font=app.font, fill='white', size=12)
     for j in range(4, 8):
-        drawRect(70+(j-4)*90, 120, 70, 90, fill=rgb(95, 66, 50))
-     
+        drawRect(leftSpace+(j-4)*cardSpace, 130, 70, 90, fill=rgb(95, 66, 50))
+        drawImage(app.player.cardObjects[j].image, leftSpace+(j-4)*cardSpace, 130, width=70, height=90)
+        drawImage('assets/elixir_icon.png', leftSpace+cardSpace*(j-4)-elixirSpace, 120, width=40, height=40)
+        drawLabel(app.player.cardObjects[j].cost, leftSpace+cardSpace*(j-4), 140, font=app.font, fill='white', size=12)
 def cards_onKeyPress(app, key):
     if(key=='right'):
         setActiveScreen('main')
@@ -231,9 +243,6 @@ def battle_onScreenActivate(app):
     app.dt=None
     app.countdownTime=360
     app.remainingTime=app.countdownTime-app.initialTime
-    #create the card library (checked working)
-    Card.createCardLibrary()
-    Tower.createTowerLibrary()
     #initialize the game
     app.battle = Game(app.username, 'Bot', app.deck, app.botDeck)
     app.battle.p1.elixir=5
