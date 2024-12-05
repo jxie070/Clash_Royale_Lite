@@ -120,6 +120,7 @@ def main_findButton(app, mouseX, mouseY):
     return None
 
 def cards_onScreenActivate(app):
+    app.selectedCard=None
     app.player = Player(app.username, app.deck)
     app.player.cardObjects = [Card.cardLibrary[card] for card in app.player.cards]
 
@@ -141,7 +142,7 @@ def cards_redrawAll(app):
     drawRect(0, 740, 180, 60, fill=rgb(114, 145, 176), opacity=30)
     drawLabel('Cards>', 107.5, 790, font=app.font, fill='white', size=20, bold=True)
     #wooden background
-    drawImage('assets/woodbg.png', 0, 0, width=480, height=400)
+    drawImage('assets/woodbg.png', 0, 0, width=480, height=280)
     #drawing in the cards and the elixir costs
     cardSpace=90
     leftSpace=70
@@ -156,10 +157,84 @@ def cards_redrawAll(app):
         drawImage(app.player.cardObjects[j].image, leftSpace+(j-4)*cardSpace, 130, width=70, height=90)
         drawImage('assets/elixir_icon.png', leftSpace+cardSpace*(j-4)-elixirSpace, 120, width=40, height=40)
         drawLabel(app.player.cardObjects[j].cost, leftSpace+cardSpace*(j-4), 140, font=app.font, fill='white', size=12)
+        drawRect(0, 230, 480, 50, fill=rgb(95, 66, 50))
+        drawLabel(f'Average Elixir Cost: {getAverageElixir(app.player.cardObjects)}', 240, 255, font=app.font, size=18, fill='white')
+    #drawing the card stats
+    drawRect(0, 280, 480, 460, fill=rgb(39, 41, 43))
+    if(app.selectedCard==None):
+        drawLabel('(Use keys 1-8 to select a card)', 240, 300, font=app.font, size=18, fill='white')
+        drawLabel('Press 0 to return to this screen)', 240, 350, font=app.font, size=18, fill='white')
+    else:
+        drawRect(20, 350, 140, 180, fill=rgb(95, 66, 50))
+        drawImage(app.selectedCard.image, 20, 350, width=140, height=180)
+        drawLabel(app.selectedCard.name, 90, 330, font=app.font, size=16, fill='white')
+        drawImage('assets/damage.png', 170, 350, width=40, height=40)
+        drawLabel(f'Damage: {app.selectedCard.damage}', 215, 370, fill='white', font=app.font, size=16, align='left')
+        if(isinstance(app.selectedCard, Troop)):
+            drawLabel('Class: Troop', 90, 540, font=app.font, size=16, fill='white')
+            drawImage('assets/hp.png', 170, 400, width=40, height=40)
+            drawLabel(f'Hitpoints: {app.selectedCard.health}', 215, 420, fill='white', font=app.font, size=16, align='left')
+            drawImage('assets/hitspeed.png', 170, 450, width=40, height=40)
+            drawLabel(f'Hit Speed: {app.selectedCard.hitspeed}s', 215, 470, fill='white', font=app.font, size=16, align='left')
+            drawImage('assets/hitrange.png', 170, 500, width=40, height=40)
+            drawLabel(f'Range: {app.selectedCard.hitrange} tiles', 215, 520, fill='white', font=app.font, size=16, align='left')
+            drawImage('assets/speed.png', 170, 550, width=40, height=40)
+            drawLabel(f'Speed: {app.selectedCard.speed}', 215, 570, fill='white', font=app.font, size=16, align='left')
+            drawImage('assets/targets.png', 170, 600, width=40, height=40)
+            drawLabel(f'Targets: {', '.join(app.selectedCard.targets)}', 215, 620, fill='white', font=app.font, size=16, align='left')
+            if(app.selectedCard.count>1):
+                drawImage('assets/count.png', 170, 650, width=40, height=40)
+                drawLabel(f'Count: {app.selectedCard.count}x', 215, 670, fill='white', font=app.font, size=16, align='left')
+        elif(isinstance(app.selectedCard, Spell)):
+            drawLabel('Class: Spell', 90, 540, font=app.font, size=16, fill='white')
+            drawImage('assets/tower_damage.png', 170, 400, width=40, height=40)
+            drawLabel(f'Tower Damage: {app.selectedCard.towerDamage}', 215, 420, fill='white', font=app.font, size=16, align='left')
+            drawImage('assets/radius.png', 170, 450, width=40, height=40)
+            drawLabel(f'Spell Radius: {app.selectedCard.radius} tiles', 215, 470, fill='white', font=app.font, size=16, align='left')
+        elif(isinstance(app.selectedCard, Building)):
+            drawLabel('Class: Building', 90, 540, font=app.font, size=16, fill='white')
+            drawImage('assets/hp.png', 170, 400, width=40, height=40)
+            drawLabel(f'Hitpoints: {app.selectedCard.initialHealth}', 215, 420, fill='white', font=app.font, size=16, align='left')
+            drawImage('assets/hitspeed.png', 170, 450, width=40, height=40)
+            drawLabel(f'Hit Speed: {app.selectedCard.hitspeed}s', 215, 470, fill='white', font=app.font, size=16, align='left')
+            drawImage('assets/hitrange.png', 170, 500, width=40, height=40)
+            drawLabel(f'Range: {app.selectedCard.hitrange} tiles', 215, 520, fill='white', font=app.font, size=16, align='left')
+            drawImage('assets/lifespan.png', 170, 550, width=40, height=40)
+            drawLabel(f'Duration: {app.selectedCard.lifespan}s', 215, 570, fill='white', font=app.font, size=16, align='left')
+
+
+        
+
+def getAverageElixir(cardObjects):
+    total=0
+    numCards=0
+    for card in cardObjects:
+        numCards+=1
+        total+=card.cost
+    return pythonRound(total/numCards, 1)
+
 def cards_onKeyPress(app, key):
     if(key=='right'):
         setActiveScreen('main')
-
+    elif(key=='0'):
+        app.selectedCard=None
+    elif(key=='1'):
+        app.selectedCard=app.player.cardObjects[0]
+    elif(key=='2'):
+        app.selectedCard=app.player.cardObjects[1]
+    elif(key=='3'):
+        app.selectedCard=app.player.cardObjects[2]
+    elif(key=='4'):
+        app.selectedCard=app.player.cardObjects[3]
+    elif(key=='5'):
+        app.selectedCard=app.player.cardObjects[4]
+    elif(key=='6'):
+        app.selectedCard=app.player.cardObjects[5]
+    elif(key=='7'):
+        app.selectedCard=app.player.cardObjects[6]
+    elif(key=='8'):
+        app.selectedCard=app.player.cardObjects[7
+                                                ]
 def cards_onMousePress(app, mouseX, mouseY):
     selected=shop_findButton(app, mouseX, mouseY)
     if(selected!=None):
@@ -180,7 +255,7 @@ def shop_onScreenActivate(app):
 
 def shop_redrawAll(app):
     drawImage('assets/bg.png', 0, 0)
-    drawLabel('How to Play:', 240, 100, size=48, font=app.font, fill='white', borderWidth=2, border='black')
+    drawLabel('How to Play:', 240, 75, size=48, font=app.font, fill='white', borderWidth=2, border='black')
     drawLabel('Navigation', 10, 150, size=24, font=app.font, fill='white', align='left')
     drawLabel('-Use the arrow keys or click to switch screens', 10, 180, size=12, font=app.font, fill='white', align='left')
     drawLabel('-Click on buttons and icons to press them', 10, 200, size=12, font=app.font, fill='white', align='left')
