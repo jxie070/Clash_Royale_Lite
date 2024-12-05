@@ -726,7 +726,7 @@ def friendlyValidPosition(app, selectedCard, selectedCell):
             if(selectedRow>16):
                 return True
             if(left==None):
-                return selectedRow>7 and selectedCol<=9
+                return selectedRow>7 and selectedCol<9
             if(right==None):
                 return selectedRow>7 and selectedCol>=9
 
@@ -741,7 +741,7 @@ def enemyValidPosition(app, selectedCard, selectedCell):
             if(selectedRow<15):
                 return True
             if(left==None):
-                return selectedRow<24 and selectedCol<=9
+                return selectedRow<24 and selectedCol<9
             if(right==None):
                 return selectedRow<24 and selectedCol>=9
 
