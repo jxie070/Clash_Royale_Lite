@@ -58,7 +58,7 @@ def main_redrawAll(app):
     drawLabel('Cards>', 107.5, 790, fill='white', size=17, bold=True)
     #shop icon
     drawImage('assets/shop_icon.png', 347.5, 740, width=55, height=55)
-    drawLabel('<Shop', 375, 790, fill='white', size=17, bold=True)
+    drawLabel('<FAQ', 375, 790, fill='white', size=17, bold=True)
     #glow to indicate which screen
     drawRect(180, 740, 120, 60, fill=rgb(114, 145, 176), opacity=30)
     #battle icon
@@ -269,11 +269,11 @@ def battle_onStep(app):
             app.constant=3
         elif app.remainingTime==0:
             app.gameOver=True
-        elixirRate=1/0.5
+        elixirRate=1/2.8
         app.battle.p1.elixir=min(app.battle.p1.elixir+app.dt*elixirRate*app.constant, 10)
         app.battle.p2.elixir=min(app.battle.p2.elixir+app.dt*elixirRate*app.constant, 10)
         #enemy bot moves
-        #enemyPlaceCard(app)
+        enemyPlaceCard(app)
         #checking towers and adjusting removing unwalkable black/red squares
         updateBoard(app)
         #making units move/attack
@@ -613,13 +613,21 @@ def friendlyValidPosition(app, selectedCard, selectedCell):
                 return selectedRow>7 and selectedCol<=9
             if(right==None):
                 return selectedRow>7 and selectedCol>=9
-    # if(cardType==Troop):
-    #     return selectedRow>15 and app.board[selectedRow][selectedCol]==0
-    # elif(cardType==Building):
-    #     return selectedRow>15 and app.board[selectedRow][selectedCol]==0
-    # elif(cardType==Spell):
-    #     return True
-    #elif side='enemy':
+
+def enemyValidPosition(app, selectedCard, selectedCell):
+    cardType = type(selectedCard)
+    selectedCol, selectedRow = selectedCell
+    left, right, king = checkTowers(app.friendlyUnits)
+    if(cardType==Spell):
+        return True
+    elif(cardType==Troop or cardType==Building):
+        if(app.board[selectedRow][selectedCol] in [0, 2]):
+            if(selectedRow<15):
+                return True
+            if(left==None):
+                return selectedRow<24 and selectedCol<=9
+            if(right==None):
+                return selectedRow<24 and selectedCol>=9
 
 def enemyPlaceCard(app):
     #currently only deploys archers at constant time intervals
