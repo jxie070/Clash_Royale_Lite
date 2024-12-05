@@ -13,6 +13,7 @@ class Game:
         print(f'Player1 Deck: {self.p1.cards}, Player2 Deck: {self.p2.cards}')
 
     def createBoard(self):
+        #18 cols, 32 rows
         #0 = deployable spaces
         board=[[0]*18 for row in range(32)]
         #1 = river lane

@@ -269,7 +269,7 @@ def battle_onStep(app):
             app.constant=3
         elif app.remainingTime==0:
             app.gameOver=True
-        elixirRate=1/2.8
+        elixirRate=1/0.5
         app.battle.p1.elixir=min(app.battle.p1.elixir+app.dt*elixirRate*app.constant, 10)
         app.battle.p2.elixir=min(app.battle.p2.elixir+app.dt*elixirRate*app.constant, 10)
         #enemy bot moves
@@ -335,10 +335,13 @@ def processUnits(app, friendlyUnits, enemyUnits):
                     if(friendlyUnit.getDistance(friendlyPosition, enemyPosition)<=radius):
                         #print('HERE')
                         if(isinstance(enemyUnit, Tower)):
-                            enemyUnit.health-=friendlyUnit.towerDamage
+                            enemyUnit.health=max(0, enemyUnit.health-friendlyUnit.towerDamage)
                         else:
-                            enemyUnit.health-=friendlyUnit.damage
+                            enemyUnit.health=max(0, enemyUnit.health-friendlyUnit.damage)
                         if(enemyUnit.health<=0):
+                            if isinstance(enemyUnit, King):
+                                app.gameOver=True
+                                continue
                             poppingIndices.append(enemyIndex)
                 enemyUnits=popFromIndices(enemyUnits, poppingIndices)
                 friendlyUnits.pop(friendlyIndex)
@@ -397,6 +400,15 @@ def battle_redrawAll(app):
     drawImage(app.battle.p1.cardObjects[1].image, 175, 660, width=75, height=90)
     drawImage(app.battle.p1.cardObjects[2].image, 260, 660, width=75, height=90)
     drawImage(app.battle.p1.cardObjects[3].image, 345, 660, width=75, height=90)
+    #drawing the elixir costs for each card 
+    drawImage('assets/elixir_icon.png', 115, 730, width=25, height=25)
+    drawImage('assets/elixir_icon.png', 200, 730, width=25, height=25)
+    drawImage('assets/elixir_icon.png', 285, 730, width=25, height=25)
+    drawImage('assets/elixir_icon.png', 370, 730, width=25, height=25)
+    drawLabel(app.battle.p1.cardObjects[0].cost, 127.5, 742.5, fill='white', bold=True)
+    drawLabel(app.battle.p1.cardObjects[1].cost, 212.5, 742.5, fill='white', bold=True)
+    drawLabel(app.battle.p1.cardObjects[2].cost, 297.5, 742.5, fill='white', bold=True)
+    drawLabel(app.battle.p1.cardObjects[3].cost, 382.5, 742.5, fill='white', bold=True)
     #drawing the next card
     drawRect(5, 705, 35, 45, fill=rgb(95, 66, 50))
     drawImage(app.battle.p1.cardObjects[4].image, 5, 705, width=35, height=45)
@@ -410,6 +422,14 @@ def battle_redrawAll(app):
                 drawRect(cellLeft, cellTop, cellWidth, cellHeight, fill='white', opacity=50)
             else:
                 drawCell(app, row, col)
+    #drawing the depoyable squares over the board
+    if(app.friendlySelectedCard!=None):
+        for row in range(len(app.board)):
+            for col in range(len(app.board[0])):
+                if(friendlyValidPosition(app, app.friendlySelectedCard, (col, row))):
+                    cellleft, cellTop = getCellLeftTop(app, row, col)
+                    cellWidth, cellHeight = getCellSize(app)
+                    drawRect(cellleft, cellTop, cellWidth, cellHeight, fill='red', opacity=20)
     #drawing the red towers
     enemyLeft, enemyRight, enemyKing = checkTowers(app.enemyUnits)
     if(enemyLeft):
@@ -571,7 +591,7 @@ def battle_onMousePress(app, mouseX, mouseY):
         selectedIndex=app.battle.p1.cards.index(app.friendlySelectedCard.name)
         if(selectedCell!=None):
             print(selectedCell, app.friendlySelectedCard.name)
-            if(validPosition(app, app.friendlySelectedCard, selectedCell, 'friendly')):
+            if(friendlyValidPosition(app, app.friendlySelectedCard, selectedCell)):
                 #print('Valid Position!')
                 app.battle.p1.deployCard(app, app.friendlySelectedCard, selectedCell, selectedIndex, app.friendlyUnits, app.friendlySelectedCard)
                 app.friendlySelectedCard=None
@@ -579,16 +599,26 @@ def battle_onMousePress(app, mouseX, mouseY):
             else:
                 print('Invalid Position!')
             
-def validPosition(app, selectedCard, selectedCell, side):
+def friendlyValidPosition(app, selectedCard, selectedCell):
     cardType = type(selectedCard)
     selectedCol, selectedRow = selectedCell
-    if(side=='friendly'):
-        if(cardType==Troop):
-            return selectedRow>15 and app.board[selectedRow][selectedCol]==0
-        elif(cardType==Building):
-            return selectedRow>15 and app.board[selectedRow][selectedCol]==0
-        elif(cardType==Spell):
-            return True
+    left, right, king = checkTowers(app.enemyUnits)
+    if(cardType==Spell):
+        return True
+    elif(cardType==Troop or cardType==Building):
+        if(app.board[selectedRow][selectedCol] in [0, 2]):
+            if(selectedRow>16):
+                return True
+            if(left==None):
+                return selectedRow>7 and selectedCol<=9
+            if(right==None):
+                return selectedRow>7 and selectedCol>=9
+    # if(cardType==Troop):
+    #     return selectedRow>15 and app.board[selectedRow][selectedCol]==0
+    # elif(cardType==Building):
+    #     return selectedRow>15 and app.board[selectedRow][selectedCol]==0
+    # elif(cardType==Spell):
+    #     return True
     #elif side='enemy':
 
 def enemyPlaceCard(app):

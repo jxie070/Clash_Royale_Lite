@@ -20,7 +20,7 @@ class Entity():
         self.targeting=(enemyUnit, enemyIndex, otherList)
         currTime=time.time()
         if(currTime-self.lastAttackTime>=self.hitspeed):
-            enemyUnit.health-=self.damage
+            enemyUnit.health=max(0, enemyUnit.health-self.damage)
             self.lastAttackTime=currTime
             if(enemyUnit.health<=0):
                 self.targeting=None
@@ -146,6 +146,7 @@ class Tower(Entity):
 
     @classmethod
     def createTowerLibrary(cls):
+        #king:4824, tower:3052
         cls.towerLibrary={
             'PrincessLeft': PrincessLeft(3052, 109, 7.5, 0.8, ['air', 'ground', 'buildings'], ['air', 'ground', 'buildings'], None),
             'PrincessRight': PrincessRight(3052, 109, 7.5, 0.8, ['air', 'ground', 'buildings'], ['air', 'ground', 'buildings'], None),
