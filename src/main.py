@@ -845,13 +845,11 @@ def enemyPlaceCard(app):
     app.enemySelectedCard=app.battle.p2.cardObjects[0]
     #app.battle.p2.deployCard(app, app.enemySelectedCard, (8, 8), 0, app.enemyUnits, app.enemySelectedCard)
     averageCol, averageRow = getWeights(app.friendlyUnits)
-    print(f'weights: {averageCol, averageRow}')
     if(averageCol<8.5):
         newCol=random.randint(0, 8)
     else:
         newCol=random.randint(9, 17)
     newRow=max(0, math.floor(averageRow)-6)
-    print(f'deploy positions: {newCol, newRow}')
     if(enemyValidPosition(app, app.enemySelectedCard, (newCol, newRow))):
         app.battle.p2.deployCard(app, app.enemySelectedCard, (newCol, newRow), 0, app.enemyUnits, app.enemySelectedCard)
     else:
