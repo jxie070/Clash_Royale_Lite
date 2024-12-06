@@ -38,38 +38,38 @@ def onAppStart(app):
 def main_redrawAll(app):
     #on main start is on app start
     #background
-    drawImage('assets/bg.png', 0, 0)
+    drawImage('src/assets/bg.png', 0, 0)
     #gui
-    drawImage('assets/battle_button.png', 115, 400, width=250, height=250)
+    drawImage('src/assets/battle_button.png', 115, 400, width=250, height=250)
     drawLabel('Battle', 240, 525, fill='white', size=32, bold=True, border='black', font=app.font, borderWidth=2)
-    drawImage('assets/arena.png', 80, 140, width=290, height=320)
+    drawImage('src/assets/arena.png', 80, 140, width=290, height=320)
     drawRect(0, 8, 480, 52, fill=rgb(4, 21, 45), opacity=75)
-    drawImage('assets/gem_icon.png', 420, 10, width=50, height=50)
+    drawImage('src/assets/gem_icon.png', 420, 10, width=50, height=50)
     drawLabel(app.gems, 420, 35, size=24, font=app.font, bold=True, fill='white', align='right')
-    drawImage('assets/gold_icon.png', 280, 10, width=50, height=50)
+    drawImage('src/assets/gold_icon.png', 280, 10, width=50, height=50)
     drawLabel(app.gold, 275, 35, size=24, font=app.font, bold=True, fill='white', align='right')
-    drawImage('assets/experience_icon.png', 10, 12, width=40, height=40)
+    drawImage('src/assets/experience_icon.png', 10, 12, width=40, height=40)
     drawLabel(app.experience, 60, 35, size=24, font=app.font, bold=True, fill='white', align='left')
-    drawImage('assets/settings_icon.png', 15, 250, width=75, height=75)
+    drawImage('src/assets/settings_icon.png', 15, 250, width=75, height=75)
     drawLabel(f'Welcome, {app.username}!', 240, 120, size=24, font=app.font, fill='white', bold=True)
     #chest slots
-    drawImage('assets/chest_slot.png', 0, 580, width=120, height=150)
-    drawImage('assets/chest_slot.png', 120, 580, width=120, height=150)
-    drawImage('assets/chest_slot.png', 240, 580, width=120, height=150)
-    drawImage('assets/chest_slot.png', 360, 580, width=120, height=150)
+    drawImage('src/assets/chest_slot.png', 0, 580, width=120, height=150)
+    drawImage('src/assets/chest_slot.png', 120, 580, width=120, height=150)
+    drawImage('src/assets/chest_slot.png', 240, 580, width=120, height=150)
+    drawImage('src/assets/chest_slot.png', 360, 580, width=120, height=150)
     #bottom bar
     drawRect(0, 740, 480, 60, fill=rgb(67, 81, 98))
     drawRect(0, 735, 480, 5, fill=rgb(111, 137, 167))
     #cards icon
-    drawImage('assets/card_icon.png', 80, 740, width=55, height=55)
+    drawImage('src/assets/card_icon.png', 80, 740, width=55, height=55)
     drawLabel('Cards>', 107.5, 790, font=app.font, fill='white', size=17, bold=True)
     #shop icon
-    drawImage('assets/shop_icon.png', 347.5, 740, width=55, height=55)
+    drawImage('src/assets/shop_icon.png', 347.5, 740, width=55, height=55)
     drawLabel('<FAQ', 375, 790, font=app.font, fill='white', size=17, bold=True)
     #glow to indicate which screen
     drawRect(180, 740, 120, 60, fill=rgb(114, 145, 176), opacity=30)
     #battle icon
-    drawImage('assets/battle_icon.png', 212.5, 740, width=55, height=55)
+    drawImage('src/assets/battle_icon.png', 212.5, 740, width=55, height=55)
     drawLabel('<Battle>', 240, 790, font=app.font, fill='white', size=20, bold=True)   
 
 #when on main screen, pressing left should go to cards; pressing right should go to shop
@@ -133,24 +133,24 @@ def cards_onScreenActivate(app):
     app.player.cardObjects = [Card.cardLibrary[card] for card in app.player.cards]
 
 def cards_redrawAll(app):
-    drawImage('assets/bg.png', 0, 0)
+    drawImage('src/assets/bg.png', 0, 0)
     drawLabel('Cards Screen', 100, 100)
     #bottom bar
     drawRect(0, 740, 480, 60, fill=rgb(67, 81, 98))
     drawRect(0, 735, 480, 5, fill=rgb(111, 137, 167))
     #battle icon
-    drawImage('assets/battle_icon.png', 212.5, 740, width=55, height=55)
+    drawImage('src/assets/battle_icon.png', 212.5, 740, width=55, height=55)
     drawLabel('<Battle>', 240, 790, font=app.font, fill='white', size=17, bold=True)
     #cards icon
-    drawImage('assets/card_icon.png', 80, 740, width=55, height=55)
+    drawImage('src/assets/card_icon.png', 80, 740, width=55, height=55)
     #shop icon
-    drawImage('assets/shop_icon.png', 347.5, 740, width=55, height=55)
+    drawImage('src/assets/shop_icon.png', 347.5, 740, width=55, height=55)
     drawLabel('<FAQ', 375, 790, font=app.font, fill='white', size=17, bold=True)
     #glow to indicate which screen
     drawRect(0, 740, 180, 60, fill=rgb(114, 145, 176), opacity=30)
     drawLabel('Cards>', 107.5, 790, font=app.font, fill='white', size=20, bold=True)
     #wooden background
-    drawImage('assets/woodbg.png', 0, 0, width=480, height=280)
+    drawImage('src/assets/woodbg.png', 0, 0, width=480, height=280)
     #drawing in the cards and the elixir costs
     cardSpace=90
     leftSpace=70
@@ -158,12 +158,12 @@ def cards_redrawAll(app):
     for i in range(4):
         drawRect(leftSpace+cardSpace*i, 20, 70, 90, fill=rgb(95, 66, 50))
         drawImage(app.player.cardObjects[i].image, leftSpace+cardSpace*i, 20, width=70, height=90)
-        drawImage('assets/elixir_icon.png', leftSpace+cardSpace*i-elixirSpace, 10, width=40, height=40)
+        drawImage('src/assets/elixir_icon.png', leftSpace+cardSpace*i-elixirSpace, 10, width=40, height=40)
         drawLabel(app.player.cardObjects[i].cost, leftSpace+cardSpace*i, 30, font=app.font, fill='white', size=12)
     for j in range(4, 8):
         drawRect(leftSpace+(j-4)*cardSpace, 130, 70, 90, fill=rgb(95, 66, 50))
         drawImage(app.player.cardObjects[j].image, leftSpace+(j-4)*cardSpace, 130, width=70, height=90)
-        drawImage('assets/elixir_icon.png', leftSpace+cardSpace*(j-4)-elixirSpace, 120, width=40, height=40)
+        drawImage('src/assets/elixir_icon.png', leftSpace+cardSpace*(j-4)-elixirSpace, 120, width=40, height=40)
         drawLabel(app.player.cardObjects[j].cost, leftSpace+cardSpace*(j-4), 140, font=app.font, fill='white', size=12)
         drawRect(0, 230, 480, 50, fill=rgb(95, 66, 50))
         drawLabel(f'Average Elixir Cost: {getAverageElixir(app.player.cardObjects)}', 240, 255, font=app.font, size=18, fill='white')
@@ -176,38 +176,38 @@ def cards_redrawAll(app):
         drawRect(20, 350, 140, 180, fill=rgb(95, 66, 50))
         drawImage(app.selectedCard.image, 20, 350, width=140, height=180)
         drawLabel(app.selectedCard.name, 90, 330, font=app.font, size=16, fill='white')
-        drawImage('assets/damage.png', 170, 350, width=40, height=40)
+        drawImage('src/assets/damage.png', 170, 350, width=40, height=40)
         drawLabel(f'Damage: {app.selectedCard.damage}', 215, 370, fill='white', font=app.font, size=16, align='left')
         if(isinstance(app.selectedCard, Troop)):
             drawLabel('Class: Troop', 90, 540, font=app.font, size=16, fill='white')
-            drawImage('assets/hp.png', 170, 400, width=40, height=40)
+            drawImage('src/assets/hp.png', 170, 400, width=40, height=40)
             drawLabel(f'Hitpoints: {app.selectedCard.health}', 215, 420, fill='white', font=app.font, size=16, align='left')
-            drawImage('assets/hitspeed.png', 170, 450, width=40, height=40)
+            drawImage('src/assets/hitspeed.png', 170, 450, width=40, height=40)
             drawLabel(f'Hit Speed: {app.selectedCard.hitspeed}s', 215, 470, fill='white', font=app.font, size=16, align='left')
-            drawImage('assets/hitrange.png', 170, 500, width=40, height=40)
+            drawImage('src/assets/hitrange.png', 170, 500, width=40, height=40)
             drawLabel(f'Range: {app.selectedCard.hitrange} tiles', 215, 520, fill='white', font=app.font, size=16, align='left')
-            drawImage('assets/speed.png', 170, 550, width=40, height=40)
+            drawImage('src/assets/speed.png', 170, 550, width=40, height=40)
             drawLabel(f'Speed: {app.selectedCard.speed}', 215, 570, fill='white', font=app.font, size=16, align='left')
-            drawImage('assets/targets.png', 170, 600, width=40, height=40)
+            drawImage('src/assets/targets.png', 170, 600, width=40, height=40)
             drawLabel(f'Targets: {', '.join(app.selectedCard.targets)}', 215, 620, fill='white', font=app.font, size=16, align='left')
             if(app.selectedCard.count>1):
-                drawImage('assets/count.png', 170, 650, width=40, height=40)
+                drawImage('src/assets/count.png', 170, 650, width=40, height=40)
                 drawLabel(f'Count: {app.selectedCard.count}x', 215, 670, fill='white', font=app.font, size=16, align='left')
         elif(isinstance(app.selectedCard, Spell)):
             drawLabel('Class: Spell', 90, 540, font=app.font, size=16, fill='white')
-            drawImage('assets/tower_damage.png', 170, 400, width=40, height=40)
+            drawImage('src/assets/tower_damage.png', 170, 400, width=40, height=40)
             drawLabel(f'Tower Damage: {app.selectedCard.towerDamage}', 215, 420, fill='white', font=app.font, size=16, align='left')
-            drawImage('assets/radius.png', 170, 450, width=40, height=40)
+            drawImage('src/assets/radius.png', 170, 450, width=40, height=40)
             drawLabel(f'Spell Radius: {app.selectedCard.radius} tiles', 215, 470, fill='white', font=app.font, size=16, align='left')
         elif(isinstance(app.selectedCard, Building)):
             drawLabel('Class: Building', 90, 540, font=app.font, size=16, fill='white')
-            drawImage('assets/hp.png', 170, 400, width=40, height=40)
+            drawImage('src/assets/hp.png', 170, 400, width=40, height=40)
             drawLabel(f'Hitpoints: {app.selectedCard.initialHealth}', 215, 420, fill='white', font=app.font, size=16, align='left')
-            drawImage('assets/hitspeed.png', 170, 450, width=40, height=40)
+            drawImage('src/assets/hitspeed.png', 170, 450, width=40, height=40)
             drawLabel(f'Hit Speed: {app.selectedCard.hitspeed}s', 215, 470, fill='white', font=app.font, size=16, align='left')
-            drawImage('assets/hitrange.png', 170, 500, width=40, height=40)
+            drawImage('src/assets/hitrange.png', 170, 500, width=40, height=40)
             drawLabel(f'Range: {app.selectedCard.hitrange} tiles', 215, 520, fill='white', font=app.font, size=16, align='left')
-            drawImage('assets/lifespan.png', 170, 550, width=40, height=40)
+            drawImage('src/assets/lifespan.png', 170, 550, width=40, height=40)
             drawLabel(f'Duration: {app.selectedCard.lifespan}s', 215, 570, fill='white', font=app.font, size=16, align='left')
 
 def getAverageElixir(cardObjects):
@@ -263,7 +263,7 @@ def shop_onScreenActivate(app):
     pass
 
 def shop_redrawAll(app):
-    drawImage('assets/bg.png', 0, 0)
+    drawImage('src/assets/bg.png', 0, 0)
     drawLabel('How to Play:', 240, 75, size=48, font=app.font, fill='white', borderWidth=2, border='black')
     drawLabel('Navigation', 10, 150, size=24, font=app.font, fill='white', align='left')
     drawLabel('-Use the arrow keys or click to switch screens', 10, 180, size=12, font=app.font, fill='white', align='left')
@@ -283,20 +283,20 @@ def shop_redrawAll(app):
     drawLabel('  starts after 3 minutes. After 6 minutes, the player', 10, 490, size=12, font=app.font, fill='white', align='left')
     drawLabel('  with more towers left standing wins. If the players', 10, 510, size=12, font=app.font, fill='white', align='left')
     drawLabel('  have the same # of towers, the game ends in a draw.', 10, 530, size=12, font=app.font, fill='white', align='left')
-    drawImage('assets/logo.png', 50, 450, width=380, height=400)
-    drawImage('assets/yawning_princess.png', 10, 530, width=120, height=120)
-    drawImage('assets/laughing_king.png', 350, 630, width=150, height=110)
+    drawImage('src/assets/logo.png', 50, 450, width=380, height=400)
+    drawImage('src/assets/yawning_princess.png', 10, 530, width=120, height=120)
+    drawImage('src/assets/laughing_king.png', 350, 630, width=150, height=110)
     #bottom bar
     drawRect(0, 740, 480, 60, fill=rgb(67, 81, 98))
     drawRect(0, 735, 480, 5, fill=rgb(111, 137, 167))
     #battle icon
-    drawImage('assets/battle_icon.png', 212.5, 740, width=55, height=55)
+    drawImage('src/assets/battle_icon.png', 212.5, 740, width=55, height=55)
     drawLabel('<Battle>', 240, 790, font=app.font, fill='white', size=17, bold=True)
     #cards icon
-    drawImage('assets/card_icon.png', 80, 740, width=55, height=55)
+    drawImage('src/assets/card_icon.png', 80, 740, width=55, height=55)
     drawLabel('Cards>', 107.5, 790, font=app.font, fill='white', size=17, bold=True)
     #shop icon
-    drawImage('assets/shop_icon.png', 347.5, 740, width=55, height=55)
+    drawImage('src/assets/shop_icon.png', 347.5, 740, width=55, height=55)
     #glow to indicate which screen
     drawRect(300, 740, 180, 60, fill=rgb(114, 145, 176), opacity=30)
     drawLabel('<FAQ', 375, 790, font=app.font, fill='white', size=20, bold=True)
@@ -514,16 +514,16 @@ def getPath(app, start, end, unit):
     return astar(app.board, newStart, newEnd, hitrange, targetted)
 
 def battle_redrawAll(app):
-    drawImage('assets/arenabg.png', 0, 0, width=480, height=650)
+    drawImage('src/assets/arenabg.png', 0, 0, width=480, height=650)
     #the background for the card deck in game
-    drawImage('assets/woodbg.png', 0, 650, width=480, height=150, opacity=85)
+    drawImage('src/assets/woodbg.png', 0, 650, width=480, height=150, opacity=85)
     #drawing the elixir bar and the lines
     drawRect(40, 755, 430 * app.battle.p1.elixir/10, 40, fill=rgb(194, 33, 199))
     drawRect(40, 755, 430, 40, fill=None, border='black', borderWidth=2)
     #1-10 for the 10 elixir bars, 40 is the starting x coordinate, 43 is by 430/10 from the above line
     for n in range(1, 10):
         drawLine(40+43*n, 755, 40+43*n, 795, lineWidth=2)
-    drawImage('assets/elixir_icon.png', 0, 745, width=60, height=60)
+    drawImage('src/assets/elixir_icon.png', 0, 745, width=60, height=60)
     #letting user know if elixir is full
     if(app.battle.p1.elixir==10):
         drawLabel('Elixir is full!', 240, 775, font=app.font, fill='red', size=24, bold=True, border='black')    
@@ -539,10 +539,10 @@ def battle_redrawAll(app):
     drawImage(app.battle.p1.cardObjects[2].image, 260, 660, width=75, height=90)
     drawImage(app.battle.p1.cardObjects[3].image, 345, 660, width=75, height=90)
     #drawing the elixir costs for each card 
-    drawImage('assets/elixir_icon.png', 115, 730, width=25, height=25)
-    drawImage('assets/elixir_icon.png', 200, 730, width=25, height=25)
-    drawImage('assets/elixir_icon.png', 285, 730, width=25, height=25)
-    drawImage('assets/elixir_icon.png', 370, 730, width=25, height=25)
+    drawImage('src/assets/elixir_icon.png', 115, 730, width=25, height=25)
+    drawImage('src/assets/elixir_icon.png', 200, 730, width=25, height=25)
+    drawImage('src/assets/elixir_icon.png', 285, 730, width=25, height=25)
+    drawImage('src/assets/elixir_icon.png', 370, 730, width=25, height=25)
     drawLabel(app.battle.p1.cardObjects[0].cost, 127.5, 742.5, font=app.font, fill='white', bold=True)
     drawLabel(app.battle.p1.cardObjects[1].cost, 212.5, 742.5, font=app.font, fill='white', bold=True)
     drawLabel(app.battle.p1.cardObjects[2].cost, 297.5, 742.5, font=app.font, fill='white', bold=True)
@@ -569,29 +569,29 @@ def battle_redrawAll(app):
                     cellWidth, cellHeight = getCellSize(app)
                     drawRect(cellleft, cellTop, cellWidth, cellHeight, fill='red', opacity=40)
     #drawing the rubble
-    drawImage('assets/rubble.png', 53, 80, width=80, height=70)
-    drawImage('assets/rubble.png', 347, 80, width=80, height=70)
-    drawImage('assets/rubble.png', 187, 0, width=106, height=81)
-    drawImage('assets/rubble.png', 53, 508, width=80, height=70)
-    drawImage('assets/rubble.png', 347, 508, width=80, height=70)
-    drawImage('assets/rubble.png', 187, 569, width=106, height=81)
+    drawImage('src/assets/rubble.png', 53, 80, width=80, height=70)
+    drawImage('src/assets/rubble.png', 347, 80, width=80, height=70)
+    drawImage('src/assets/rubble.png', 187, 0, width=106, height=81)
+    drawImage('src/assets/rubble.png', 53, 508, width=80, height=70)
+    drawImage('src/assets/rubble.png', 347, 508, width=80, height=70)
+    drawImage('src/assets/rubble.png', 187, 569, width=106, height=81)
     #drawing the towers over the rubble, once towers are destroyed rubble is visible
     ##drawing the red towers
     enemyLeft, enemyRight, enemyKing = checkTowers(app.enemyUnits)
     if(enemyLeft):
-        drawImage('assets/red_princess_tower.png', 53, 80, width=80, height=70)
+        drawImage('src/assets/red_princess_tower.png', 53, 80, width=80, height=70)
     if(enemyRight):
-        drawImage('assets/red_princess_tower.png', 347, 80, width=80, height=70)
+        drawImage('src/assets/red_princess_tower.png', 347, 80, width=80, height=70)
     if(enemyKing):
-        drawImage('assets/red_king_tower.png', 187, 0, width=106, height=81)
+        drawImage('src/assets/red_king_tower.png', 187, 0, width=106, height=81)
     ##drawing the blue towers
     friendlyLeft, friendlyRight, friendlyKing = checkTowers(app.friendlyUnits)
     if(friendlyLeft):
-        drawImage('assets/blue_princess_tower.png', 53, 508, width=80, height=70)
+        drawImage('src/assets/blue_princess_tower.png', 53, 508, width=80, height=70)
     if(friendlyRight):
-        drawImage('assets/blue_princess_tower.png', 347, 508, width=80, height=70)
+        drawImage('src/assets/blue_princess_tower.png', 347, 508, width=80, height=70)
     if(friendlyKing):
-        drawImage('assets/blue_king_tower.png', 187, 569, width=106, height=81)
+        drawImage('src/assets/blue_king_tower.png', 187, 569, width=106, height=81)
     #drawing the units/buildings in friendlyUnits
     for friendlyUnit, friendlyPosition in app.friendlyUnits:
         if(isinstance(friendlyUnit, (Troop, Building, Tower))):
@@ -887,7 +887,7 @@ def settings_redrawAll(app):
     #Music and sfx icons are from https://iconduck.com/icons/269893/speaker and https://www.flaticon.com/free-icon/sound-effect_2217608
     #username icon from https://www.vecteezy.com/png/19879186-user-icon-on-transparent-background
     #overview
-    drawImage('assets/bg.png', 0, 0)
+    drawImage('src/assets/bg.png', 0, 0)
     drawLabel('Settings', 240, 40, font=app.font, fill='white', size=48, bold=True, border='black')
     drawLabel('(press escape to return)', 240, 80, font=app.font, fill='white', size=12)
     #music
@@ -899,7 +899,7 @@ def settings_redrawAll(app):
         musicLabel='Disabled'
         musicFill=rgb(210, 43, 43)
         musicBorder=rgb(238, 75, 43)
-    drawImage('assets/speaker.png', 10, 120, width=50, height=50)
+    drawImage('src/assets/speaker.png', 10, 120, width=50, height=50)
     drawLabel('Music:', 10, 190, font=app.font, fill='white', size=16, align='left')
     drawRect(100, 120, 300, 80, fill=musicFill, border=musicBorder, borderWidth=8)
     drawLabel(musicLabel, 250, 160, font=app.font, fill='white', size=24)
@@ -912,12 +912,12 @@ def settings_redrawAll(app):
         sfxFill=rgb(210, 43, 43)
         sfxBorder=rgb(238, 75, 43)
     #sfx
-    drawImage('assets/sfx.png', 10, 250, width=50, height=50)
+    drawImage('src/assets/sfx.png', 10, 250, width=50, height=50)
     drawLabel('SFX:', 10, 320, font=app.font, fill='white', size=16, align='left')
     drawRect(100, 250, 300, 80, fill=sfxFill, border=sfxBorder, borderWidth=8)
     drawLabel(sfxLabel, 250, 290, font=app.font, fill='white', size=24)
     #username
-    drawImage('assets/username.png', 10, 380, width=50, height=50)
+    drawImage('src/assets/username.png', 10, 380, width=50, height=50)
     drawLabel('User:', 10, 450, font=app.font, fill='white', size=16, align='left')
     drawRect(100, 380, 300, 80, fill=rgb(115, 147, 179), border=rgb(137, 207, 240), borderWidth=8)
     if(app.changingName):

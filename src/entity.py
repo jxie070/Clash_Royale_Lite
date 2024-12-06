@@ -74,14 +74,14 @@ class Card(Entity):
     @classmethod
     def createCardLibrary(cls):
         cls.cardLibrary={
-            'Fireball': Spell('Fireball', 4, 'assets/fireball.png', None, 689, 207, 2.5, 1),
-            'Arrows': Spell('Arrows', 3, 'assets/arrows.png', None, 366, 93, 4, 1),
-            'Giant': Troop('Giant', 5, 'assets/giant.png', 'assets/giant_sprite.png', 4091, 254, 1.5, 2, ['buildings'], ['ground', 'air'], 'slow', 1, 0),
-            'Knight': Troop('Knight', 3, 'assets/knight.png', 'assets/knight_sprite.png', 1766, 202, 1, 2, ['ground'], ['ground', 'air'], 'medium', 1, 0),
-            'Mini-Pekka':Troop('Mini-Pekka', 4, 'assets/mini-pekka.png', 'assets/mini-pekka_sprite.png', 1361, 720, 1, 2, ['ground'], ['ground', 'air'], 'fast', 1, 0),
-            'Musketeer': Troop('Musketeer', 4, 'assets/musketeer.png', 'assets/musketeer_sprite.png', 720, 218, 1, 6, ['air', 'ground'], ['ground', 'air'], 'medium', 1, 0),
-            'Archers': Troop('Archers', 3, 'assets/archers.png', 'assets/archers_sprite.png', 304, 107, 0.9, 6, ['air', 'ground'], ['ground', 'air'], 'medium', 2, 0),
-            'Cannon': Building('Cannon', 3, 'assets/cannon.png', 'assets/cannon_sprite.png', 824, 212, 0.9, 5.5, ['ground'], ['ground','buildings'], 30, 824, 1)
+            'Fireball': Spell('Fireball', 4, 'src/assets/fireball.png', None, 689, 207, 2.5, 1),
+            'Arrows': Spell('Arrows', 3, 'src/assets/arrows.png', None, 366, 93, 4, 1),
+            'Giant': Troop('Giant', 5, 'src/assets/giant.png', 'src/assets/giant_sprite.png', 4091, 254, 1.5, 2, ['buildings'], ['ground', 'air'], 'slow', 1, 0),
+            'Knight': Troop('Knight', 3, 'src/assets/knight.png', 'src/assets/knight_sprite.png', 1766, 202, 1, 2, ['ground'], ['ground', 'air'], 'medium', 1, 0),
+            'Mini-Pekka':Troop('Mini-Pekka', 4, 'src/assets/mini-pekka.png', 'src/assets/mini-pekka_sprite.png', 1361, 720, 1, 2, ['ground'], ['ground', 'air'], 'fast', 1, 0),
+            'Musketeer': Troop('Musketeer', 4, 'src/assets/musketeer.png', 'src/assets/musketeer_sprite.png', 720, 218, 1, 6, ['air', 'ground'], ['ground', 'air'], 'medium', 1, 0),
+            'Archers': Troop('Archers', 3, 'src/assets/archers.png', 'src/assets/archers_sprite.png', 304, 107, 0.9, 6, ['air', 'ground'], ['ground', 'air'], 'medium', 2, 0),
+            'Cannon': Building('Cannon', 3, 'src/assets/cannon.png', 'src/assets/cannon_sprite.png', 824, 212, 0.9, 5.5, ['ground'], ['ground','buildings'], 30, 824, 1)
         }
 
     
