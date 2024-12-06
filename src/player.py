@@ -14,8 +14,11 @@ class Player:
     def deployCard(self, app, card, selectedCell, selectedIndex, selectedList, selectedCard):
         if self.elixir>=card.cost:
             self.elixir-=card.cost
-            
-            selectedList.append((selectedCard.clone(), selectedCell))
+            for n in range(card.count):
+                shiftX, shiftY = n, 0
+                oldCol, oldRow = selectedCell
+                newCell = oldCol+shiftX, oldRow+shiftY
+                selectedList.append((selectedCard.clone(), newCell))
             self.cards.append(self.cards.pop(selectedIndex))
             self.cardObjects=[Card.cardLibrary[card] for card in self.cards]
             #resetting the selected cards

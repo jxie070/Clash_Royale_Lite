@@ -384,7 +384,7 @@ def battle_onScreenActivate(app):
 
 def battle_onStep(app):
     if(app.gameOver):
-        if(app.battleMusic!=None):
+        if(app.music):
             app.battleMusic.pause()
     else:
         #time
@@ -710,14 +710,16 @@ def battle_onKeyPress(app, key):
     if(app.gameOver):
         app.tapSound.play()
         setActiveScreen('main')
-        app.battleMusic.pause()
+        if(app.music):
+            app.battleMusic.pause()
         app.menuMusic.play()
     else:
         if(app.sfx and key in ['1', '2', '3', '4', 'escape']):
             app.tapSound.play()
         if(key=='escape'):
-            app.battleMusic.pause()
-            app.menuMusic.play()
+            if(app.music):
+                app.battleMusic.pause()
+                app.menuMusic.play()
             setActiveScreen('main')      
         elif(key=='1'):
             app.friendlySelectedCard=app.battle.p1.cardObjects[0]
@@ -755,10 +757,12 @@ def battle_onMouseMove(app, mouseX, mouseY):
 def battle_onMousePress(app, mouseX, mouseY):
     if(app.gameOver):
         if(100<=mouseX<=380 and 500<=mouseY<=620):
-            app.tapSound.play()
+            if(app.sfx):
+                app.tapSound.play()
+            if(app.music):
+                app.battleMusic.pause()
+                app.menuMusic.play()
             setActiveScreen('main')
-            app.battleMusic.pause()
-            app.menuMusic.play()
     else:
         selectedCell=battle_getCell(app, mouseX, mouseY)
         print(selectedCell)
@@ -813,9 +817,11 @@ def friendlyValidPosition(app, selectedCard, selectedCell):
         if(app.board[selectedRow][selectedCol] in [0, 2]):
             if(selectedRow>16):
                 return True
-            if(left==None):
+            elif(left==None and right==None):
+                return selectedRow>7
+            elif(left==None):
                 return selectedRow>7 and selectedCol<9
-            if(right==None):
+            elif(right==None):
                 return selectedRow>7 and selectedCol>=9
 
 def enemyValidPosition(app, selectedCard, selectedCell):
@@ -828,9 +834,11 @@ def enemyValidPosition(app, selectedCard, selectedCell):
         if(app.board[selectedRow][selectedCol] in [0, 2]):
             if(selectedRow<15):
                 return True
-            if(left==None):
+            elif(left==None and right==None):
+                return selectedRow<24
+            elif(left==None):
                 return selectedRow<24 and selectedCol<9
-            if(right==None):
+            elif(right==None):
                 return selectedRow<24 and selectedCol>=9
 
 def enemyPlaceCard(app):
