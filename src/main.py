@@ -3,7 +3,7 @@ from game import Game
 from entity import Card, Building, Troop, Spell, Tower, PrincessLeft, PrincessRight, King
 from node import Node, astar
 from player import Player
-import math, copy, random, time
+import math, copy, random, time, string
 
 #Jack Xie, jackx2
 #This project in its entirety, the concepts, the sprites, etc. are taken from Supercell's game Clash Royale.
@@ -33,6 +33,10 @@ def onAppStart(app):
     #create the card library
     Card.createCardLibrary()
     Tower.createTowerLibrary()
+    #music vars
+    app.music=True
+    app.sfx=True
+
 def main_redrawAll(app):
     #on main start is on app start
     #background
@@ -49,7 +53,7 @@ def main_redrawAll(app):
     drawImage('assets/experience_icon.png', 10, 12, width=40, height=40)
     drawLabel(app.experience, 60, 35, size=24, font=app.font, bold=True, fill='white', align='left')
     drawImage('assets/settings_icon.png', 15, 250, width=75, height=75)
-    drawLabel(f'Welcome, {app.username}!', 240, 120, size=32, font=app.font, fill='white', bold=True)
+    drawLabel(f'Welcome, {app.username}!', 240, 120, size=24, font=app.font, fill='white', bold=True)
     #chest slots
     drawImage('assets/chest_slot.png', 0, 580, width=120, height=150)
     drawImage('assets/chest_slot.png', 120, 580, width=120, height=150)
@@ -202,9 +206,6 @@ def cards_redrawAll(app):
             drawImage('assets/lifespan.png', 170, 550, width=40, height=40)
             drawLabel(f'Duration: {app.selectedCard.lifespan}s', 215, 570, fill='white', font=app.font, size=16, align='left')
 
-
-        
-
 def getAverageElixir(cardObjects):
     total=0
     numCards=0
@@ -233,8 +234,8 @@ def cards_onKeyPress(app, key):
     elif(key=='7'):
         app.selectedCard=app.player.cardObjects[6]
     elif(key=='8'):
-        app.selectedCard=app.player.cardObjects[7
-                                                ]
+        app.selectedCard=app.player.cardObjects[7]
+
 def cards_onMousePress(app, mouseX, mouseY):
     selected=shop_findButton(app, mouseX, mouseY)
     if(selected!=None):
@@ -365,6 +366,9 @@ def battle_onScreenActivate(app):
     app.card2bg=rgb(95, 66, 50)
     app.card3bg=rgb(95, 66, 50)
     app.card4bg=rgb(95, 66, 50)
+    #music
+    #app.battleMusic=Sound('assets/battle_music.wav')
+    #app.battleMusic.play(loop=True)
 
 def battle_onStep(app):
     if(app.gameOver):
@@ -760,17 +764,79 @@ def battle_getCell(app, mouseX, mouseY):
         return math.floor(mouseX/cellWidth), math.floor(mouseY/cellHeight)
 
 def settings_onScreenActivate(app):
-    pass
-
+    app.changingName=False
+    app.newName=''
+    app.nameTooShort=False
+    
 def settings_redrawAll(app):
+    #Music and sfx icons are from https://iconduck.com/icons/269893/speaker and https://www.flaticon.com/free-icon/sound-effect_2217608
+    #username icon from https://www.vecteezy.com/png/19879186-user-icon-on-transparent-background
+    #overview
     drawImage('assets/bg.png', 0, 0)
-    drawLabel('Settings', 240, 40, fill='white', size=48, bold=True)
-    drawLabel('(press escape to return)', 240, 75, fill='white', size=12)
-
+    drawLabel('Settings', 240, 40, font=app.font, fill='white', size=48, bold=True, border='black')
+    drawLabel('(press escape to return)', 240, 80, font=app.font, fill='white', size=12)
+    #music
+    if(app.music):
+        musicLabel='Enabled'
+        musicFill='lime'
+        musicBorder='green'
+    else:
+        musicLabel='Disabled'
+        musicFill=rgb(210, 43, 43)
+        musicBorder=rgb(238, 75, 43)
+    drawImage('assets/speaker.png', 10, 120, width=50, height=50)
+    drawLabel('Music:', 10, 190, font=app.font, fill='white', size=16, align='left')
+    drawRect(100, 120, 300, 80, fill=musicFill, border=musicBorder, borderWidth=8)
+    drawLabel(musicLabel, 250, 160, font=app.font, fill='white', size=24)
+    if(app.sfx):
+        sfxLabel='Enabled'
+        sfxFill='lime'
+        sfxBorder='green'
+    else:
+        sfxLabel='Disabled'
+        sfxFill=rgb(210, 43, 43)
+        sfxBorder=rgb(238, 75, 43)
+    #sfx
+    drawImage('assets/sfx.png', 10, 250, width=50, height=50)
+    drawLabel('SFX:', 10, 320, font=app.font, fill='white', size=16, align='left')
+    drawRect(100, 250, 300, 80, fill=sfxFill, border=sfxBorder, borderWidth=8)
+    drawLabel(sfxLabel, 250, 290, font=app.font, fill='white', size=24)
+    #username
+    drawImage('assets/username.png', 10, 380, width=50, height=50)
+    drawLabel('User:', 10, 450, font=app.font, fill='white', size=16, align='left')
+    drawRect(100, 380, 300, 80, fill=rgb(115, 147, 179), border=rgb(137, 207, 240), borderWidth=8)
+    if(app.changingName):
+        drawLabel(app.newName, 250, 420, font=app.font, fill='white', size=24)
+        drawLabel('Press enter to save!', 250, 440, font=app.font, fill='white', size=12)
+    else:
+        drawLabel(app.username, 250, 420, font=app.font, fill='white', size=24)
+    if(app.nameTooShort):
+        drawLabel('Username must be at least of length 3!', 250, 470, font=app.font, fill='red', size=12)
 
 def settings_onKeyPress(app, key):
+    app.nameTooShort=False
     if(key=='escape'):
         setActiveScreen('main')
+    if(app.changingName):
+        if((key in string.ascii_letters or key in string.digits) and len(app.newName)<=10):
+            app.newName+=key
+        elif(key=='backspace'):
+            app.newName=app.newName[:-1]
+        elif(key=='enter'):
+            if(len(app.newName)<3):
+                app.nameTooShort=True
+            else:
+                app.changingName=False
+                app.username=app.newName
+                app.newName=''
+
+def settings_onMousePress(app, mouseX, mouseY):
+    if(100<=mouseX<=400 and 120<=mouseY<=200):
+        app.music = not app.music
+    elif(100<=mouseX<=400 and 250<=mouseY<=330):
+        app.sfx = not app.sfx
+    elif(100<=mouseX<=400 and 380<=mouseY<=460):
+        app.changingName=True
 
 def main():
     runAppWithScreens(initialScreen='main');
