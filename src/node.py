@@ -2,7 +2,7 @@ import heapq
 import math
 
 class Node:
-    #class copied from Google AI completely, A* algorithm was adapted to fit the game
+    #Node class structure copied from Google AI completely, A* algorithm was adapted to fit the game
     #heavily inspired from Google AI after searching "What might an A* algorithm look like that finds a path from one coordintate to another"
     def __init__(self, x, y, g=0, h=0):
         self.x = x

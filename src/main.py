@@ -10,15 +10,6 @@ import math, copy, random, time, string
 #All sprites can be found at https://github.com/smlbiobot/cr-assets-png/tree/master/assets
 #Any other uncited images are from in game screenshots from Supercell's game Clash Royale
 #This project is meant to mimic some of the core features of Clash Royale
-#TODO:
-#1. make A* work on air units, add the attribute targetting so tower doenst retarget to closest target if troop walks in front of another
-#2. make sure the targetting system works, no way to test currently (also fix pathing issue with range of giant/minipekka)
-#3. Imrpove UI, comment code (A*, timer, @classmethod), etc.
-#4. MAKE AI FUNCTION THAT DEPLOOYS ENEMY UNITS
-#4. Fix bug with destroying king tower, also when both towers destroyed, pathing is weird
-#5. test valid position when deploying enemy units
-#6. make the cards screen able to see the stats of each card
-
 def onAppStart(app):
     app.stepsPerSecond=1000
     app.width=480
@@ -114,6 +105,7 @@ def main_onMousePress(app, mouseX, mouseY):
         app.tapSound.play()
 
 def chestOpen(n):
+    #unimplemented feature :(
     pass
 
 def main_findButton(app, mouseX, mouseY):
@@ -392,7 +384,8 @@ def battle_onScreenActivate(app):
 
 def battle_onStep(app):
     if(app.gameOver):
-        app.battleMusic.pause()
+        if(app.battleMusic!=None):
+            app.battleMusic.pause()
     else:
         #time
         app.currentTime=time.time()
