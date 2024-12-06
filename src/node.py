@@ -2,6 +2,8 @@ import heapq
 import math
 
 class Node:
+    #class copied from Google AI completely, A* algorithm was adapted to fit the game
+    #heavily inspired from Google AI after searching "What might an A* algorithm look like that finds a path from one coordintate to another"
     def __init__(self, x, y, g=0, h=0):
         self.x = x
         self.y = y
@@ -19,7 +21,6 @@ def distance(node1, node2):
     return math.sqrt((node1.x - node2.x)**2 + (node1.y - node2.y)**2)
 
 def astar(grid, start, end, hitrange, targetted):
-    #heavily inspired from Google AI after searching "What might an A* algorithm look like that finds a path from one coordintate to another"
     open_set = []
     closed_set = set()
 

@@ -76,18 +76,18 @@ class Card(Entity):
         cls.cardLibrary={
             'Fireball': Spell('Fireball', 4, 'assets/fireball.png', None, 689, 207, 2.5),
             'Arrows': Spell('Arrows', 3, 'assets/arrows.png', None, 366, 93, 4,),
-            'Giant': Troop('Giant', 5, 'assets/giant.png', 'assets/giant_sprite.png', 4091, 254, 1.5, 2, ['buildings'], ['ground'], 'slow', 1),
-            'Knight': Troop('Knight', 3, 'assets/knight.png', 'assets/knight_sprite.png', 1766, 202, 1, 2, ['ground'], ['ground'], 'medium', 1),
-            'Mini-Pekka':Troop('Mini-Pekka', 4, 'assets/mini-pekka.png', 'assets/mini-pekka_sprite.png', 1361, 720, 1, 2, ['ground'], ['ground'], 'fast', 1),
-            'Musketeer': Troop('Musketeer', 4, 'assets/musketeer.png', 'assets/musketeer_sprite.png', 720, 218, 1, 6, ['air', 'ground'], ['ground'], 'medium', 1),
-            'Archers': Troop('Archers', 3, 'assets/archers.png', 'assets/archers_sprite.png', 304, 107, 0.9, 6, ['air', 'ground'], ['ground'], 'medium', 2),
+            'Giant': Troop('Giant', 5, 'assets/giant.png', 'assets/giant_sprite.png', 4091, 254, 1.5, 2, ['buildings'], ['ground'], 'slow', 1, 0),
+            'Knight': Troop('Knight', 3, 'assets/knight.png', 'assets/knight_sprite.png', 1766, 202, 1, 2, ['ground'], ['ground'], 'medium', 1, 0),
+            'Mini-Pekka':Troop('Mini-Pekka', 4, 'assets/mini-pekka.png', 'assets/mini-pekka_sprite.png', 1361, 720, 1, 2, ['ground'], ['ground'], 'fast', 1, 0),
+            'Musketeer': Troop('Musketeer', 4, 'assets/musketeer.png', 'assets/musketeer_sprite.png', 720, 218, 1, 6, ['air', 'ground'], ['ground'], 'medium', 1, 0),
+            'Archers': Troop('Archers', 3, 'assets/archers.png', 'assets/archers_sprite.png', 304, 107, 0.9, 6, ['air', 'ground'], ['ground'], 'medium', 2, 0),
             'Cannon': Building('Cannon', 3, 'assets/cannon.png', 'assets/cannon_sprite.png', 824, 212, 0.9, 5.5, ['ground'], ['ground'], 30, 824)
         }
 
     
 
 class Troop(Card):
-    def __init__(self, name, cost, image, sprite, health, damage, hitspeed, hitrange, targets, targetted, speed, count):
+    def __init__(self, name, cost, image, sprite, health, damage, hitspeed, hitrange, targets, targetted, speed, count, splash):
         super().__init__(name, cost, image, sprite)
         self.health=health
         self.damage=damage
@@ -97,6 +97,7 @@ class Troop(Card):
         self.speed=speed
         self.targetted=targetted
         self.count=count
+        self.splash=splash
 
     def __repr__(self):
         return f'Troop(name={self.name})'
@@ -152,7 +153,7 @@ class Tower(Entity):
             'PrincessLeft': PrincessLeft(3052, 109, 7.5, 0.8, ['air', 'ground', 'buildings'], ['air', 'ground', 'buildings'], None),
             'PrincessRight': PrincessRight(3052, 109, 7.5, 0.8, ['air', 'ground', 'buildings'], ['air', 'ground', 'buildings'], None),
             'King': King(4824, 109, 7, 1, ['air', 'ground', 'buildings'], ['air', 'ground', 'buildings'], False, None)
-        }
+        }#4824
 
 class PrincessLeft(Tower):
     def __init__(self, health, damage, hitrange, hitspeed, targets, targetted, image):

@@ -27,7 +27,7 @@ def onAppStart(app):
     app.gems=0
     app.experience=0
     app.username='User'
-    app.botDeck=['Archers', 'Archers', 'Archers', 'Archers', 'Archers', 'Archers', 'Archers', 'Archers']
+    app.botDeck=['Archers', 'Knight', 'Giant', 'Knight', 'Musketeer', 'Archers', 'Musketeer', 'Mini-Pekka']
     app.deck=['Archers', 'Knight', 'Giant', 'Fireball', 'Arrows', 'Cannon', 'Mini-Pekka', 'Musketeer']
     app.font='supercell-magic'
     #create the card library
@@ -36,6 +36,12 @@ def onAppStart(app):
     #music vars
     app.music=True
     app.sfx=True
+    app.menuMusic=Sound('sounds/menu.wav')
+    app.tapSound=Sound('sounds/tap.wav')
+    app.winSound=Sound('sounds/win.wav')
+    app.lossSound=Sound('sounds/loss.wav')
+    app.drawSound=Sound('sounds/draw.wav')
+    app.menuMusic.play(restart=False, loop=True)
 
 def main_redrawAll(app):
     #on main start is on app start
@@ -44,7 +50,7 @@ def main_redrawAll(app):
     #gui
     drawImage('assets/battle_button.png', 115, 400, width=250, height=250)
     drawLabel('Battle', 240, 525, fill='white', size=32, bold=True, border='black', font=app.font, borderWidth=2)
-    drawImage('assets/arena.png', 65, 150, width=350, height=340)
+    drawImage('assets/arena.png', 80, 140, width=290, height=320)
     drawRect(0, 8, 480, 52, fill=rgb(4, 21, 45), opacity=75)
     drawImage('assets/gem_icon.png', 420, 10, width=50, height=50)
     drawLabel(app.gems, 420, 35, size=24, font=app.font, bold=True, fill='white', align='right')
@@ -76,6 +82,8 @@ def main_redrawAll(app):
 
 #when on main screen, pressing left should go to cards; pressing right should go to shop
 def main_onKeyPress(app, key):
+    if(app.sfx and key in ['left', 'right']):
+        app.tapSound.play()
     if(key=='left'):
         setActiveScreen('cards')
     elif(key=='right'):
@@ -91,6 +99,7 @@ def main_onMousePress(app, mouseX, mouseY):
         elif(selected=='settingsButton'):
             setActiveScreen('settings')
         elif(selected=='battleButton'):
+            app.menuMusic.pause()
             setActiveScreen('battle')
         elif(selected=='chestSlot1'):
             chestOpen(1)
@@ -100,6 +109,8 @@ def main_onMousePress(app, mouseX, mouseY):
             chestOpen(3)
         elif(selected=='chestSlot4'):
             chestOpen(4)
+    if(app.sfx and selected!=None):
+        app.tapSound.play()
 
 def chestOpen(n):
     pass
@@ -215,6 +226,8 @@ def getAverageElixir(cardObjects):
     return pythonRound(total/numCards, 1)
 
 def cards_onKeyPress(app, key):
+    if(app.sfx and key in ['right', '0', '1', '2', '3', '4', '5', '6', '7', '8']):
+        app.tapSound.play()
     if(key=='right'):
         setActiveScreen('main')
     elif(key=='0'):
@@ -243,6 +256,8 @@ def cards_onMousePress(app, mouseX, mouseY):
             setActiveScreen('main')
         elif(selected=='shopButton'):
             setActiveScreen('shop')
+    if(app.sfx and selected!=None):
+        app.tapSound.play()
 
 def cards_findButton(app, mouseX, mouseY):
     if(80<=mouseX<=135 and 740<=mouseY<795):
@@ -294,6 +309,8 @@ def shop_redrawAll(app):
     drawLabel('<FAQ', 375, 790, font=app.font, fill='white', size=20, bold=True)
 
 def shop_onKeyPress(app, key):
+    if(app.sfx and key in ['left']):
+        app.tapSound.play()
     if(key=='left'):
         setActiveScreen('main')
 
@@ -304,6 +321,8 @@ def shop_onMousePress(app, mouseX, mouseY):
             setActiveScreen('main')
         elif(selected=='cardButton'):
             setActiveScreen('cards')
+    if(app.sfx and selected!=None):
+        app.tapSound.play()
 
 def shop_findButton(app, mouseX, mouseY):
     if(80<=mouseX<=135 and 740<=mouseY<795):
@@ -367,12 +386,13 @@ def battle_onScreenActivate(app):
     app.card3bg=rgb(95, 66, 50)
     app.card4bg=rgb(95, 66, 50)
     #music
-    #app.battleMusic=Sound('assets/battle_music.wav')
-    #app.battleMusic.play(loop=True)
+    app.battleMusic=Sound('sounds/battle.wav')
+    if(app.music):
+        app.battleMusic.play(loop=True, restart=True)
 
 def battle_onStep(app):
     if(app.gameOver):
-        setActiveScreen('main')
+        app.battleMusic.pause()
     else:
         #time
         app.currentTime=time.time()
@@ -483,9 +503,13 @@ def popFromIndices(L, indices):
     return L
 
 def clearUnits(unitsList):
+    poppingIndices=[]
     for index, (unit, position) in enumerate(unitsList):
         if(not isinstance(unit, Spell) and unit.health<=0):
-            unitsList.pop(index)
+            poppingIndices.append(index)
+            #unitsList.pop(index)
+    for index in reversed(poppingIndices):
+        unitsList.pop(index)
 
 def getPath(app, start, end, unit):
     startCol, startRow = start
@@ -497,6 +521,7 @@ def getPath(app, start, end, unit):
     return astar(app.board, newStart, newEnd, hitrange, targetted)
 
 def battle_redrawAll(app):
+    drawImage('assets/arenabg.png', 0, 0, width=480, height=650)
     #the background for the card deck in game
     drawImage('assets/woodbg.png', 0, 650, width=480, height=150, opacity=85)
     #drawing the elixir bar and the lines
@@ -533,15 +558,15 @@ def battle_redrawAll(app):
     drawRect(10, 705, 35, 45, fill=rgb(95, 66, 50))
     drawImage(app.battle.p1.cardObjects[4].image, 5, 705, width=35, height=45)
     drawLabel('Next:', 27.5, 695, fill='white', font=app.font, size=12, bold=True)
-    #creating the board
+    #creating the board (Useful for debugging, not needed after board png overlayed)
     for row in range(app.rows):
-        for col in range(app.cols):
-            if((col, row)==app.friendlySelectedCell):
-                cellLeft, cellTop = getCellLeftTop(app, row, col)
-                cellWidth, cellHeight = getCellSize(app)
-                drawRect(cellLeft, cellTop, cellWidth, cellHeight, fill='white', opacity=50)
-            else:
-                drawCell(app, row, col)
+            for col in range(app.cols):
+                if((col, row)==app.friendlySelectedCell):
+                    cellLeft, cellTop = getCellLeftTop(app, row, col)
+                    cellWidth, cellHeight = getCellSize(app)
+                    drawRect(cellLeft, cellTop, cellWidth, cellHeight, fill='white', opacity=50)
+    #         else:
+    #             drawCell(app, row, col)
     #drawing the depoyable squares over the board
     if(app.friendlySelectedCard!=None):
         for row in range(len(app.board)):
@@ -549,8 +574,16 @@ def battle_redrawAll(app):
                 if(friendlyValidPosition(app, app.friendlySelectedCard, (col, row))):
                     cellleft, cellTop = getCellLeftTop(app, row, col)
                     cellWidth, cellHeight = getCellSize(app)
-                    drawRect(cellleft, cellTop, cellWidth, cellHeight, fill='red', opacity=20)
-    #drawing the red towers
+                    drawRect(cellleft, cellTop, cellWidth, cellHeight, fill='red', opacity=40)
+    #drawing the rubble
+    drawImage('assets/rubble.png', 53, 80, width=80, height=70)
+    drawImage('assets/rubble.png', 347, 80, width=80, height=70)
+    drawImage('assets/rubble.png', 187, 0, width=106, height=81)
+    drawImage('assets/rubble.png', 53, 508, width=80, height=70)
+    drawImage('assets/rubble.png', 347, 508, width=80, height=70)
+    drawImage('assets/rubble.png', 187, 569, width=106, height=81)
+    #drawing the towers over the rubble, once towers are destroyed rubble is visible
+    ##drawing the red towers
     enemyLeft, enemyRight, enemyKing = checkTowers(app.enemyUnits)
     if(enemyLeft):
         drawImage('assets/red_princess_tower.png', 53, 80, width=80, height=70)
@@ -558,12 +591,12 @@ def battle_redrawAll(app):
         drawImage('assets/red_princess_tower.png', 347, 80, width=80, height=70)
     if(enemyKing):
         drawImage('assets/red_king_tower.png', 187, 0, width=106, height=81)
-    #drawing the blue towers
+    ##drawing the blue towers
     friendlyLeft, friendlyRight, friendlyKing = checkTowers(app.friendlyUnits)
     if(friendlyLeft):
-        drawImage('assets/red_princess_tower.png', 53, 508, width=80, height=70)
+        drawImage('assets/blue_princess_tower.png', 53, 508, width=80, height=70)
     if(friendlyRight):
-        drawImage('assets/red_princess_tower.png', 347, 508, width=80, height=70)
+        drawImage('assets/blue_princess_tower.png', 347, 508, width=80, height=70)
     if(friendlyKing):
         drawImage('assets/blue_king_tower.png', 187, 569, width=106, height=81)
     #drawing the units/buildings in friendlyUnits
@@ -578,6 +611,44 @@ def battle_redrawAll(app):
     drawTimer(app)  
     #drawing spell range if selected card is Spell
     drawSpellBorders(app)
+    #game over overlay
+    if(app.gameOver):
+        drawRect(0, 0, 480, 800, fill='white', opacity=60)
+        result=outcome(app.friendlyUnits, app.enemyUnits)
+        if(result==True):
+            app.winSound.play()
+            endText='You Won!'
+        elif(result==False):
+            app.lossSound.play()
+            endText='You Lost!'
+        else:
+            app.drawSound.play()
+            endText='Draw!'
+        drawLabel(endText, 240, 200, font=app.font, size=32, fill='white', border='black', borderWidth=2)
+        drawRect(100, 500, 280, 120, fill=rgb(115, 147, 179), border=rgb(137, 207, 240), borderWidth=8)
+        drawLabel('Continue', 240, 560, font=app.font, fill='white', size=24)
+        drawLabel('(click or press any key)', 240, 590, font=app.font, fill='white', size=12)
+
+def outcome(friendlyUnits, enemyUnits):
+    #returns True if the player won, False if bot won, None is no one won
+    friendlyLeft, friendlyRight, friendlyKing = checkTowers(friendlyUnits)
+    enemyLeft, enemyRight, enemyKing = checkTowers(enemyUnits)
+    if(friendlyKing==None):
+        return False
+    if(enemyKing==None):
+        return True
+    friendlyCrowns=0
+    enemyCrowns=0
+    for fstatus in (friendlyLeft, friendlyRight):
+        if fstatus==True:
+            friendlyCrowns+=1
+    for estatus in (enemyLeft, enemyRight):
+        if estatus==True:
+            enemyCrowns+=1
+    if(friendlyCrowns==enemyCrowns):
+        return None
+    else:
+        return friendlyCrowns>enemyCrowns
 
 def checkTowers(friendlyList):
     left, right, king = None, None, None
@@ -623,11 +694,12 @@ def drawTimer(app):
     drawLabel(time, 440, 20, fill='white', font=app.font, size=18, bold=True, border='black', borderWidth=2)
 
 def drawCell(app, row, col):
+    #make opacity 100 for debug
     colorList=['green', 'blue', 'brown', 'black', 'red']
     colorIndex=app.board[row][col]
     cellLeft, cellTop = getCellLeftTop(app, row, col)
     cellWidth, cellHeight = getCellSize(app)
-    drawRect(cellLeft, cellTop, cellWidth, cellHeight, fill=colorList[colorIndex], border='black', borderWidth=app.cellBorderWidth)
+    drawRect(cellLeft, cellTop, cellWidth, cellHeight, fill=colorList[colorIndex], border='black', borderWidth=app.cellBorderWidth, opacity=0)
     
 def getCellLeftTop(app, row, col):
     cellWidth, cellHeight = getCellSize(app)
@@ -641,83 +713,101 @@ def getCellSize(app):
     return (cellWidth, cellHeight)
 
 def battle_onKeyPress(app, key):
-    if(key=='escape'):
+    if(app.gameOver):
+        app.tapSound.play()
         setActiveScreen('main')
-    elif(key=='1'):
-        app.friendlySelectedCard=app.battle.p1.cardObjects[0]
-        app.card1bg='white'
-        app.card2bg=rgb(95, 66, 50)
-        app.card3bg=rgb(95, 66, 50)
-        app.card4bg=rgb(95, 66, 50)
-        print('Selected Card:', app.friendlySelectedCard.name)
-    elif(key=='2'):
-        app.friendlySelectedCard=app.battle.p1.cardObjects[1]
-        app.card2bg='white'
-        app.card1bg=rgb(95, 66, 50)
-        app.card3bg=rgb(95, 66, 50)
-        app.card4bg=rgb(95, 66, 50)        
-        print('Selected Card:', app.friendlySelectedCard.name)
-    elif(key=='3'):
-        app.friendlySelectedCard=app.battle.p1.cardObjects[2]
-        app.card3bg='white'
-        app.card1bg=rgb(95, 66, 50)
-        app.card2bg=rgb(95, 66, 50)
-        app.card4bg=rgb(95, 66, 50)
-        print('Selected Card:', app.friendlySelectedCard.name)
-    elif(key=='4'):
-        app.friendlySelectedCard=app.battle.p1.cardObjects[3]
-        app.card4bg='white'
-        app.card1bg=rgb(95, 66, 50)
-        app.card2bg=rgb(95, 66, 50)
-        app.card3bg=rgb(95, 66, 50)
-        print('Selected Card:', app.friendlySelectedCard.name)
-
-def battle_onMouseMove(app, mouseX, mouseY):
-    app.friendlySelectedCell=battle_getCell(app, mouseX, mouseY)
-
-def battle_onMousePress(app, mouseX, mouseY):
-    selectedCell=battle_getCell(app, mouseX, mouseY)
-    print(selectedCell)
-    if(selectedCell==None):
-        if(90<=mouseX<=165 and 660<=mouseY<=750):
+        app.battleMusic.pause()
+        app.menuMusic.play()
+    else:
+        if(app.sfx and key in ['1', '2', '3', '4', 'escape']):
+            app.tapSound.play()
+        if(key=='escape'):
+            app.battleMusic.pause()
+            app.menuMusic.play()
+            setActiveScreen('main')      
+        elif(key=='1'):
             app.friendlySelectedCard=app.battle.p1.cardObjects[0]
             app.card1bg='white'
             app.card2bg=rgb(95, 66, 50)
             app.card3bg=rgb(95, 66, 50)
             app.card4bg=rgb(95, 66, 50)
-            print('Selected Card:', app.friendlySelectedCard.name) 
-        elif(175<=mouseX<=250 and 660<=mouseY<=750):
+            print('Selected Card:', app.friendlySelectedCard.name)
+        elif(key=='2'):
             app.friendlySelectedCard=app.battle.p1.cardObjects[1]
             app.card2bg='white'
             app.card1bg=rgb(95, 66, 50)
             app.card3bg=rgb(95, 66, 50)
-            app.card4bg=rgb(95, 66, 50)
-            print('Selected Card:', app.friendlySelectedCard.name) 
-        elif(260<=mouseX<=335 and 660<=mouseY<=750):
+            app.card4bg=rgb(95, 66, 50)        
+            print('Selected Card:', app.friendlySelectedCard.name)
+        elif(key=='3'):
             app.friendlySelectedCard=app.battle.p1.cardObjects[2]
             app.card3bg='white'
             app.card1bg=rgb(95, 66, 50)
             app.card2bg=rgb(95, 66, 50)
             app.card4bg=rgb(95, 66, 50)
             print('Selected Card:', app.friendlySelectedCard.name)
-        elif(345<=mouseX<=420 and 660<=mouseY<=750):
+        elif(key=='4'):
             app.friendlySelectedCard=app.battle.p1.cardObjects[3]
             app.card4bg='white'
             app.card1bg=rgb(95, 66, 50)
             app.card2bg=rgb(95, 66, 50)
             app.card3bg=rgb(95, 66, 50)
-            print('Selected Card:', app.friendlySelectedCard.name) 
-    if(app.friendlySelectedCard!=None):
-        selectedIndex=app.battle.p1.cards.index(app.friendlySelectedCard.name)
-        if(selectedCell!=None):
-            print(selectedCell, app.friendlySelectedCard.name)
-            if(friendlyValidPosition(app, app.friendlySelectedCard, selectedCell)):
-                #print('Valid Position!')
-                app.battle.p1.deployCard(app, app.friendlySelectedCard, selectedCell, selectedIndex, app.friendlyUnits, app.friendlySelectedCard)
-                app.friendlySelectedCard=None
-                #print(f'friendlyUnits: {app.friendlyUnits}')
-            else:
-                print('Invalid Position!')
+            print('Selected Card:', app.friendlySelectedCard.name)
+
+def battle_onMouseMove(app, mouseX, mouseY):
+    if(not app.gameOver):
+        app.friendlySelectedCell=battle_getCell(app, mouseX, mouseY)
+
+def battle_onMousePress(app, mouseX, mouseY):
+    if(app.gameOver):
+        if(100<=mouseX<=380 and 500<=mouseY<=620):
+            app.tapSound.play()
+            setActiveScreen('main')
+            app.battleMusic.pause()
+            app.menuMusic.play()
+    else:
+        selectedCell=battle_getCell(app, mouseX, mouseY)
+        print(selectedCell)
+        if(selectedCell==None):
+            if(90<=mouseX<=165 and 660<=mouseY<=750):
+                app.friendlySelectedCard=app.battle.p1.cardObjects[0]
+                app.card1bg='white'
+                app.card2bg=rgb(95, 66, 50)
+                app.card3bg=rgb(95, 66, 50)
+                app.card4bg=rgb(95, 66, 50)
+                print('Selected Card:', app.friendlySelectedCard.name) 
+            elif(175<=mouseX<=250 and 660<=mouseY<=750):
+                app.friendlySelectedCard=app.battle.p1.cardObjects[1]
+                app.card2bg='white'
+                app.card1bg=rgb(95, 66, 50)
+                app.card3bg=rgb(95, 66, 50)
+                app.card4bg=rgb(95, 66, 50)
+                print('Selected Card:', app.friendlySelectedCard.name) 
+            elif(260<=mouseX<=335 and 660<=mouseY<=750):
+                app.friendlySelectedCard=app.battle.p1.cardObjects[2]
+                app.card3bg='white'
+                app.card1bg=rgb(95, 66, 50)
+                app.card2bg=rgb(95, 66, 50)
+                app.card4bg=rgb(95, 66, 50)
+                print('Selected Card:', app.friendlySelectedCard.name)
+            elif(345<=mouseX<=420 and 660<=mouseY<=750):
+                app.friendlySelectedCard=app.battle.p1.cardObjects[3]
+                app.card4bg='white'
+                app.card1bg=rgb(95, 66, 50)
+                app.card2bg=rgb(95, 66, 50)
+                app.card3bg=rgb(95, 66, 50)
+                print('Selected Card:', app.friendlySelectedCard.name) 
+        if(app.friendlySelectedCard!=None):
+            selectedIndex=app.battle.p1.cards.index(app.friendlySelectedCard.name)
+            if(selectedCell!=None):
+                print(selectedCell, app.friendlySelectedCard.name)
+                if(friendlyValidPosition(app, app.friendlySelectedCard, selectedCell)):
+                    #print('Valid Position!')
+                    app.battle.p1.deployCard(app, app.friendlySelectedCard, selectedCell, selectedIndex, app.friendlyUnits, app.friendlySelectedCard)
+                    app.friendlySelectedCard=None
+                    #print(f'friendlyUnits: {app.friendlyUnits}')
+                else:
+                    print('Invalid Position!')
             
 def friendlyValidPosition(app, selectedCard, selectedCell):
     cardType = type(selectedCard)
@@ -752,7 +842,32 @@ def enemyValidPosition(app, selectedCard, selectedCell):
 def enemyPlaceCard(app):
     #currently only deploys archers at constant time intervals
     app.enemySelectedCard=app.battle.p2.cardObjects[0]
-    app.battle.p2.deployCard(app, app.enemySelectedCard, (8, 8), 0, app.enemyUnits, app.enemySelectedCard)
+    #app.battle.p2.deployCard(app, app.enemySelectedCard, (8, 8), 0, app.enemyUnits, app.enemySelectedCard)
+    averageCol, averageRow = getWeights(app.friendlyUnits)
+    print(f'weights: {averageCol, averageRow}')
+    if(averageCol<8.5):
+        newCol=random.randint(0, 8)
+    else:
+        newCol=random.randint(9, 17)
+    newRow=max(0, math.floor(averageRow)-6)
+    print(f'deploy positions: {newCol, newRow}')
+    if(enemyValidPosition(app, app.enemySelectedCard, (newCol, newRow))):
+        app.battle.p2.deployCard(app, app.enemySelectedCard, (newCol, newRow), 0, app.enemyUnits, app.enemySelectedCard)
+    else:
+        pass
+
+def getWeights(unitsList):
+    colTotal, rowTotal = 0, 0
+    total=0
+    for troop, position in unitsList:
+        if(not isinstance(troop, Tower)):
+            total+=1
+            col, row = position
+            colTotal+=col
+            rowTotal+=row
+    if(total== 0):
+        return (0, 0)
+    return colTotal/total, rowTotal/total
 
 #returns the format as (x, y) or (col, row)
 def battle_getCell(app, mouseX, mouseY):
@@ -814,6 +929,8 @@ def settings_redrawAll(app):
         drawLabel('Username must be at least of length 3!', 250, 470, font=app.font, fill='red', size=12)
 
 def settings_onKeyPress(app, key):
+    if(app.sfx and key in ['escape', 'enter']):
+        app.tapSound.play()
     app.nameTooShort=False
     if(key=='escape'):
         setActiveScreen('main')
@@ -833,9 +950,19 @@ def settings_onKeyPress(app, key):
 def settings_onMousePress(app, mouseX, mouseY):
     if(100<=mouseX<=400 and 120<=mouseY<=200):
         app.music = not app.music
+        if(app.sfx):
+            app.tapSound.play()
+        if(not app.music):
+            app.menuMusic.pause()
+        else:
+            app.menuMusic.play()
     elif(100<=mouseX<=400 and 250<=mouseY<=330):
+        if(app.sfx):
+            app.tapSound.play()
         app.sfx = not app.sfx
     elif(100<=mouseX<=400 and 380<=mouseY<=460):
+        if(app.sfx):
+            app.tapSound.play()
         app.changingName=True
 
 def main():
