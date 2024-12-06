@@ -27,7 +27,7 @@ def onAppStart(app):
     app.gems=0
     app.experience=0
     app.username='User'
-    app.botDeck=['Archers', 'Knight', 'Giant', 'Knight', 'Musketeer', 'Archers', 'Musketeer', 'Mini-Pekka']
+    app.botDeck=['Archers', 'Knight', 'Giant', 'Mini-Pekka', 'Archers', 'Knight', 'Giant', 'Mini-Pekka']
     app.deck=['Archers', 'Knight', 'Giant', 'Fireball', 'Arrows', 'Cannon', 'Mini-Pekka', 'Musketeer']
     app.font='supercell-magic'
     #create the card library
@@ -41,6 +41,7 @@ def onAppStart(app):
     app.winSound=Sound('sounds/win.wav')
     app.lossSound=Sound('sounds/loss.wav')
     app.drawSound=Sound('sounds/draw.wav')
+    app.battleMusic=Sound('sounds/battle.wav')
     app.menuMusic.play(restart=False, loop=True)
 
 def main_redrawAll(app):
@@ -386,7 +387,6 @@ def battle_onScreenActivate(app):
     app.card3bg=rgb(95, 66, 50)
     app.card4bg=rgb(95, 66, 50)
     #music
-    app.battleMusic=Sound('sounds/battle.wav')
     if(app.music):
         app.battleMusic.play(loop=True, restart=True)
 
@@ -602,11 +602,11 @@ def battle_redrawAll(app):
     #drawing the units/buildings in friendlyUnits
     for friendlyUnit, friendlyPosition in app.friendlyUnits:
         if(isinstance(friendlyUnit, (Troop, Building, Tower))):
-            drawUnit(app, friendlyUnit, friendlyPosition)
+            drawUnit(app, friendlyUnit, friendlyPosition, 0)
     #repeating for enemy units
     for enemyUnit, enemyPosition in app.enemyUnits:
         if(isinstance(friendlyUnit, (Troop, Building, Tower))):
-            drawUnit(app, enemyUnit, enemyPosition) 
+            drawUnit(app, enemyUnit, enemyPosition, 180) 
     #drawing timer
     drawTimer(app)  
     #drawing spell range if selected card is Spell
@@ -630,6 +630,7 @@ def battle_redrawAll(app):
         drawLabel('(click or press any key)', 240, 590, font=app.font, fill='white', size=12)
 
 def outcome(friendlyUnits, enemyUnits):
+    #sometimes bugs if laggy: if king health is at -1 game lags and says draw
     #returns True if the player won, False if bot won, None is no one won
     friendlyLeft, friendlyRight, friendlyKing = checkTowers(friendlyUnits)
     enemyLeft, enemyRight, enemyKing = checkTowers(enemyUnits)
@@ -674,11 +675,11 @@ def cellToPixel(app, row, col):
     adjustedY = (row+0.5)*app.rowHeight
     return adjustedX, adjustedY
 
-def drawUnit(app, unit, position):
+def drawUnit(app, unit, position, rotationAngle):
     col, row = position
     adjustedX, adjustedY = cellToPixel(app, row, col)
     if(isinstance(unit, (Troop, Building))):
-        drawImage(unit.sprite, adjustedX, adjustedY, align='center')
+        drawImage(unit.sprite, adjustedX, adjustedY, align='center', rotateAngle=rotationAngle)
     drawLabel(rounded(unit.health), adjustedX, adjustedY, size=14, font=app.font, fill='white')
 
 def rounded(n):
